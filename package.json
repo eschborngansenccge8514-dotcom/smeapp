@@ -1,0 +1,15 @@
+{
+  "name": "my-marketplace",
+  "private": true,
+  "scripts": {
+    "dev:web": "turbo run dev --filter=@repo/web",
+    "dev:mobile": "turbo run dev --filter=@repo/mobile",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check"
+  },
+  "devDependencies": {
+    "turbo": "^2.8.20"
+  },
+  "packageManager": "pnpm@10.32.1"
+}
