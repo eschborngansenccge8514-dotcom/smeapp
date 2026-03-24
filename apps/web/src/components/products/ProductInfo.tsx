@@ -167,6 +167,7 @@ export function ProductInfo({ product }: { product: any }) {
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                 className="w-11 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-40"
                 disabled={quantity <= 1}
+                aria-label="Decrease quantity"
               >
                 <Minus size={16} />
               </button>
@@ -175,6 +176,7 @@ export function ProductInfo({ product }: { product: any }) {
                 onClick={() => setQuantity((q) => Math.min(activeStock, q + 1))}
                 className="w-11 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-40"
                 disabled={quantity >= activeStock}
+                aria-label="Increase quantity"
               >
                 <Plus size={16} />
               </button>
@@ -198,6 +200,7 @@ export function ProductInfo({ product }: { product: any }) {
         <button
           onClick={handleAddToCart}
           disabled={isOutOfStock}
+          aria-label={addedToCart ? 'Product added to cart' : 'Add to cart'}
           className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold text-sm transition-all
             ${addedToCart
               ? 'bg-green-500 text-white'

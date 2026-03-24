@@ -6,3 +6,6 @@ export {
 } from './types'
 export { ringgitToSen, senToRinggit, formatOrderId } from './payment'
 export * from './stores/cartStore'
+export * from './billplz/client'
+export * from './lalamove/client'
+export * from './easyparcel/client'
