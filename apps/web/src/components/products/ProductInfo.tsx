@@ -31,12 +31,15 @@ export function ProductInfo({ product }: { product: any }) {
       clearCart()
     }
     addItem({
-      ...product,
+      id: product.id,
       name: selectedVariant ? `${product.name} (${selectedVariant.name})` : product.name,
       price: activePrice,
-      variant_id: selectedVariant?.id ?? null,
+      image_urls: product.image_urls ?? (product.image_url ? [product.image_url] : []),
       quantity,
-    }, product.store_id, product.stores?.name)
+      stock_qty: activeStock,
+      variant_id: selectedVariant?.id ?? null,
+      store_id: product.store_id,
+    }, product.store_id, product.stores?.name ?? '')
 
     setAddedToCart(true)
     toast.success('Added to cart', { icon: '🛍️' })

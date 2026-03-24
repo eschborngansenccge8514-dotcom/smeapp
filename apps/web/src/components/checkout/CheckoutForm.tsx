@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
-import { useCartStore } from '@/stores/useCartStore'
+import { useCartStore } from '@/stores/cartStore'
 import { formatPrice } from '@/lib/utils'
 import { Loader2, Lock } from 'lucide-react'
 
@@ -77,10 +77,7 @@ export function CheckoutForm({ user, profile }: { user: any; profile: any }) {
           customer_id: user.id,
           store_id: storeId,
           status: 'pending',
-          payment_status: 'unpaid',
-          delivery_address: address,
-          delivery_postcode: postcode,
-          delivery_state: state,
+          delivery_address: [address.trim(), postcode.trim(), state.trim()].filter(Boolean).join(', '),
           delivery_lat: 0,
           delivery_lng: 0,
           delivery_type: getDeliveryType(),
@@ -96,7 +93,7 @@ export function CheckoutForm({ user, profile }: { user: any; profile: any }) {
       await supabase.from('order_items').insert(
         items.map((item) => ({
           order_id: order.id,
-          product_id: item.productId,
+          product_id: item.id,
           quantity: item.quantity,
           unit_price: item.price,
         }))
@@ -224,8 +221,8 @@ export function CheckoutForm({ user, profile }: { user: any; profile: any }) {
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
         <h2 className="font-bold text-lg mb-4">💳 Payment Summary</h2>
         <div className="space-y-2">
-          {items.map((item) => (
-            <div key={item.productId} className="flex justify-between text-sm">
+          {items.map((item, i) => (
+            <div key={`${item.id}-${item.variant_id ?? 'none'}-${i}`} className="flex justify-between text-sm">
               <span className="text-gray-600">{item.name} × {item.quantity}</span>
               <span>{formatPrice(item.price * item.quantity)}</span>
             </div>

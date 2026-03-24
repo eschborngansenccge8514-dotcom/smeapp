@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { useCartStore } from '@/stores/useCartStore'
+import { useCartStore } from '@/stores/cartStore'
 import type { User } from '@supabase/supabase-js'
 
 export function Navbar() {
@@ -12,7 +12,10 @@ export function Navbar() {
   const [user, setUser] = useState<User | null>(null)
   const [role, setRole] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const itemCount = useCartStore((s) => s.getItemCount())
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     const supabase = createClient()
@@ -66,7 +69,7 @@ export function Navbar() {
           {/* Cart */}
           <Link href="/cart" className="relative text-sm text-gray-600 hover:text-indigo-600 transition-colors">
             🛒 Cart
-            {itemCount > 0 && (
+            {mounted && itemCount > 0 && (
               <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
                 {itemCount > 9 ? '9+' : itemCount}
               </span>
@@ -122,7 +125,7 @@ export function Navbar() {
         <div className="flex md:hidden items-center gap-4">
           <Link href="/cart" className="relative text-gray-600">
             🛒
-            {itemCount > 0 && (
+            {mounted && itemCount > 0 && (
               <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
                 {itemCount > 9 ? '9+' : itemCount}
               </span>
@@ -138,7 +141,7 @@ export function Navbar() {
       {menuOpen && (
         <div className="md:hidden bg-white border-t border-gray-100 px-4 py-3 space-y-3">
           <Link href="/" onClick={() => setMenuOpen(false)} className="block text-sm text-gray-700 py-2">Home</Link>
-          <Link href="/cart" onClick={() => setMenuOpen(false)} className="block text-sm text-gray-700 py-2">Cart {itemCount > 0 && `(${itemCount})`}</Link>
+          <Link href="/cart" onClick={() => setMenuOpen(false)} className="block text-sm text-gray-700 py-2">Cart {mounted && itemCount > 0 && `(${itemCount})`}</Link>
           {role === 'merchant' && (
             <Link href="/merchant/dashboard" onClick={() => setMenuOpen(false)} className="block text-sm text-gray-700 py-2">Dashboard</Link>
           )}

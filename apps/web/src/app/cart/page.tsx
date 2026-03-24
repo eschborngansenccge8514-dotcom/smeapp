@@ -1,5 +1,5 @@
 'use client'
-import { useCartStore } from '@/stores/useCartStore'
+import { useCartStore } from '@/stores/cartStore'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -34,21 +34,33 @@ export default function CartPage() {
         )}
 
         <div className="space-y-3 mb-6">
-          {items.map((item) => (
-            <div key={item.productId} className="bg-white rounded-2xl p-4 flex items-center gap-4 border border-gray-100 shadow-sm">
+          {items.map((item, index) => (
+            <div key={`${item.id}-${item.variant_id ?? 'none'}-${index}`} className="bg-white rounded-2xl p-4 flex items-center gap-4 border border-gray-100 shadow-sm">
               <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-gray-100 shrink-0">
-                {item.imageUrl ? <Image src={item.imageUrl} alt={item.name} fill className="object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xl">🛍️</div>}
+                {item.image_urls?.[0]
+                  ? <Image src={item.image_urls[0]} alt={item.name} fill sizes="64px" className="object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center text-xl">🛍️</div>
+                }
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-gray-900 truncate">{item.name}</p>
                 <p className="text-indigo-600 font-bold">RM {item.price.toFixed(2)}</p>
               </div>
               <div className="flex items-center gap-2">
-                <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-700 hover:bg-gray-200">−</button>
+                <button
+                  onClick={() => updateQuantity(item.id, item.variant_id, item.quantity - 1)}
+                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-700 hover:bg-gray-200"
+                >−</button>
                 <span className="w-6 text-center font-bold">{item.quantity}</span>
-                <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white hover:bg-indigo-700">+</button>
+                <button
+                  onClick={() => updateQuantity(item.id, item.variant_id, item.quantity + 1)}
+                  className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white hover:bg-indigo-700"
+                >+</button>
               </div>
-              <button onClick={() => removeItem(item.productId)} className="text-gray-300 hover:text-red-500 transition-colors text-xl ml-1">✕</button>
+              <button
+                onClick={() => removeItem(item.id, item.variant_id)}
+                className="text-gray-300 hover:text-red-500 transition-colors text-xl ml-1"
+              >✕</button>
             </div>
           ))}
         </div>

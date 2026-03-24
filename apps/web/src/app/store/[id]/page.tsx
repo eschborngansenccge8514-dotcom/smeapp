@@ -23,7 +23,7 @@ export default async function StorePage({ params, searchParams }: PageProps) {
   const [{ data: store }, { data: categories }] = await Promise.all([
     supabase.from('stores')
       .select('*, store_hours(*), profiles(full_name)')
-      .eq('id', id).eq('is_active', true).single(),
+      .eq('id', id).single(),
     supabase.from('categories').select('*').eq('is_active', true).order('sort_order'),
   ])
 
