@@ -16,7 +16,7 @@ interface CartStore {
   items: CartItem[]
   storeId: string | null
   storeName: string | null
-  addItem: (product: any, storeId: string, storeName: string) => void
+  addItem: (product: any, storeId: string, storeName: string) => string | void
   removeItem: (id: string, variantId: string | null) => void
   updateQuantity: (id: string, variantId: string | null, qty: number) => void
   clearCart: () => void
@@ -34,9 +34,12 @@ export const useCartStore = create<CartStore>()(
       storeName: null,
 
       addItem: (product, storeId, storeName) => {
+        const state = get()
+        const isCrossStore = state.storeId && state.storeId !== storeId
+
         set((state) => {
           // Cross-store: clear existing cart
-          if (state.storeId && state.storeId !== storeId) {
+          if (isCrossStore) {
             return {
               items: [{ ...product, quantity: product.quantity ?? 1 }],
               storeId,
@@ -61,6 +64,8 @@ export const useCartStore = create<CartStore>()(
             storeName,
           }
         })
+
+        return isCrossStore ? 'cross_store' : 'added'
       },
 
       removeItem: (id, variantId) => {

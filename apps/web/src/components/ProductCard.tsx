@@ -22,7 +22,16 @@ export function ProductCard({ product, storeId, storeName, onCrossStore }: Produ
 
   function handleAdd() {
     const result = addItem(
-      { productId: product.id, name: product.name, price: product.price, quantity: 1, imageUrl: product.image_url },
+      { 
+        id: product.id, 
+        name: product.name, 
+        price: product.price, 
+        quantity: 1, 
+        image_urls: product.image_url ? [product.image_url] : [],
+        stock_qty: product.stock_qty,
+        variant_id: null,
+        store_id: storeId
+      } as any,
       storeId,
       storeName
     )
