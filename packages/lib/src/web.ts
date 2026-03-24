@@ -1,8 +1,7 @@
+// Web-specific exports
 export { supabase } from './supabase'
-export * from './hooks/useAuth'
-export { 
+export { useAuth } from './hooks/useAuth'
+export type { 
   Profile, Store, Product, Order, OrderItem, Payment,
   UserRole, OrderStatus, DeliveryType, PaymentStatus 
 } from './types'
-export { ringgitToSen, senToRinggit, formatOrderId } from './payment'
-export * from './stores/cartStore'
