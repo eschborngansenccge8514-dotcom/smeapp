@@ -44,15 +44,20 @@ export function ProductGrid({ products, store }: { products: any[]; store: any }
                 </span>
                 <button
                   onClick={() => {
-                    addItem({
-                      id: product.id,
-                      store_id: store.id,
-                      store_name: store.name,
-                      name: product.name,
-                      price: product.price,
-                      image_url: product.image_url,
-                      quantity: 1,
-                    })
+                    addItem(
+                      {
+                        id: product.id,
+                        name: product.name,
+                        price: product.price,
+                        image_urls: product.image_urls ?? (product.image_url ? [product.image_url] : []),
+                        quantity: 1,
+                        stock_qty: product.stock_qty ?? 99,
+                        variant_id: null,
+                        store_id: store.id,
+                      },
+                      store.id,
+                      store.name,
+                    )
                     toast.success(`${product.name} added to cart`, {
                       icon: <ShoppingCart className="h-4 w-4" />,
                       duration: 2000,

@@ -23,6 +23,7 @@ interface CartStore {
   getTotal: () => number
   getItemCount: () => number
   getItemQuantity: (id: string, variantId: string | null) => number
+  getItemById: (id: string) => CartItem | undefined
 }
 
 export const useCartStore = create<CartStore>()(
@@ -88,6 +89,7 @@ export const useCartStore = create<CartStore>()(
       getItemCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
       getItemQuantity: (id, variantId) =>
         get().items.find((i) => i.id === id && i.variant_id === variantId)?.quantity ?? 0,
+      getItemById: (id) => get().items.find((i) => i.id === id),
     }),
     {
       name: 'cart-storage',
