@@ -5,12 +5,15 @@ import { createClient } from '@supabase/supabase-js'
 // IMPORTANT: disable Next.js body parsing — we need the raw body for HMAC
 export const dynamic = 'force-dynamic'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 export async function POST(req: NextRequest) {
+  const supabase = getSupabase()
   const rawBody = await req.text()
   const signature = req.headers.get('x-razorpay-signature')
 
