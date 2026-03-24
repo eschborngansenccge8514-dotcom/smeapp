@@ -20,6 +20,7 @@ interface CartStore {
   clearCart: () => void
   getTotal: () => number
   getItemCount: () => number
+  getItemById: (productId: string) => CartItem | undefined
 }
 
 export const useCartStore = create<CartStore>()(
@@ -56,6 +57,7 @@ export const useCartStore = create<CartStore>()(
       clearCart: () => set({ items: [], storeId: null, storeName: null }),
       getTotal: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
       getItemCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
+      getItemById: (productId) => get().items.find((i) => i.productId === productId),
     }),
     { name: 'web-cart-storage', storage: createJSONStorage(() => localStorage) }
   )

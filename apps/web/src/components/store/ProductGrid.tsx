@@ -5,7 +5,7 @@ import { ShoppingCart, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 
 export function ProductGrid({ products, store }: { products: any[]; store: any }) {
-  const { addItem, getItemById } = useCartStore()
+  const { addItem, getItemById } = useCartStore() as any
 
   if (products.length === 0) {
     return (
