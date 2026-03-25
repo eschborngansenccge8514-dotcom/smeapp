@@ -8,11 +8,12 @@ import toast from 'react-hot-toast'
 
 interface ProductFormProps {
   storeId: string
+  storeCategory?: string | null
   categories: any[]
   product?: any  // if editing
 }
 
-export function ProductForm({ storeId, categories, product }: ProductFormProps) {
+export function ProductForm({ storeId, storeCategory, categories, product }: ProductFormProps) {
   const supabase = createSupabaseBrowser()
   const router = useRouter()
   const isEditing = !!product
@@ -25,7 +26,14 @@ export function ProductForm({ storeId, categories, product }: ProductFormProps) 
     sku: product?.sku ?? '',
     weight_kg: product?.weight_kg?.toString() ?? '',
     category_id: product?.category_id ?? '',
+    category: product?.category ?? '',
     is_available: product?.is_available ?? true,
+    is_popular: product?.is_popular ?? false,
+    is_new: product?.is_new ?? false,
+    spice_level: product?.spice_level ?? 0,
+    is_halal: product?.is_halal ?? false,
+    is_vegan: product?.is_vegan ?? false,
+    is_vegetarian: product?.is_vegetarian ?? false,
   })
   const [imageUrls, setImageUrls] = useState<string[]>(product?.image_urls ?? [])
   const [variants, setVariants] = useState<{ name: string; price: string; stock: string }[]>(
@@ -79,7 +87,14 @@ export function ProductForm({ storeId, categories, product }: ProductFormProps) 
         sku: form.sku.trim() || null,
         weight_kg: form.weight_kg ? parseFloat(form.weight_kg) : null,
         category_id: form.category_id || null,
+        category: form.category || null,
         is_available: form.is_available,
+        is_popular: form.is_popular,
+        is_new: form.is_new,
+        spice_level: form.spice_level,
+        is_halal: form.is_halal,
+        is_vegan: form.is_vegan,
+        is_vegetarian: form.is_vegetarian,
         image_urls: imageUrls,
       }
 
@@ -207,6 +222,59 @@ export function ProductForm({ storeId, categories, product }: ProductFormProps) 
             placeholder="0.500" />
         </div>
       </div>
+
+      {/* F&B specific fields — shown only for F&B stores */}
+      {storeCategory?.includes('Food') && (
+        <div className="border-t border-gray-100 pt-5 space-y-4">
+          <p className="text-sm font-bold text-gray-700 flex items-center gap-2">
+            🍜 Food & Beverages Details
+          </p>
+
+          {/* Category */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Menu Category</label>
+            <input type="text" value={form.category} onChange={(e) => update('category', e.target.value)}
+              placeholder="e.g. Main Course, Drinks, Desserts"
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+          </div>
+
+          {/* Spice Level */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Spice Level</label>
+            <div className="flex gap-2">
+              {[{v:0,l:'None'},{v:1,l:'🌶️ Mild'},{v:2,l:'🌶️🌶️ Medium'},{v:3,l:'🌶️🌶️🌶️ Hot'}].map((s) => (
+                <button key={s.v} type="button" onClick={() => update('spice_level', s.v)}
+                  className={`px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
+                    form.spice_level === s.v ? 'bg-red-500 text-white border-red-500' : 'bg-white text-gray-600 border-gray-200'
+                  }`}>
+                  {s.l}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Dietary flags */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Dietary Tags</label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { key: 'is_halal',      label: '✓ Halal',      active: form.is_halal },
+                { key: 'is_vegan',      label: '🌱 Vegan',      active: form.is_vegan },
+                { key: 'is_vegetarian', label: '🥗 Vegetarian', active: form.is_vegetarian },
+                { key: 'is_popular',    label: '🔥 Popular',    active: form.is_popular },
+                { key: 'is_new',        label: '✨ New',         active: form.is_new },
+              ].map((tag) => (
+                <button key={tag.key} type="button" onClick={() => update(tag.key, !tag.active)}
+                  className={`px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
+                    tag.active ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-200'
+                  }`}>
+                  {tag.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Variants */}
       <div>

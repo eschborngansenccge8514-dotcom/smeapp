@@ -1,19 +1,14 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 
-const { mockCreateSupabaseAdmin } = vi.hoisted(() => ({
-  mockCreateSupabaseAdmin: vi.fn(() => ({
+// Mock admin
+vi.mock('@/lib/supabase/admin', () => ({
+  createSupabaseAdmin: () => ({
     from: vi.fn().mockReturnThis(),
     update: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     select: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({ data: {}, error: null }),
-    upsert: vi.fn().mockReturnThis(),
-    delete: vi.fn().mockReturnThis(),
-  })),
-}))
-
-vi.mock('../../../../lib/supabase/admin', () => ({
-  createSupabaseAdmin: mockCreateSupabaseAdmin,
+  }),
 }))
 
 import { POST } from '../billplz/route'
@@ -33,10 +28,9 @@ describe('POST /api/webhooks/billplz', () => {
 
   beforeEach(() => {
     process.env.BILLPLZ_X_SIGNATURE_KEY = SECRET
-    process.env.INTERNAL_SECRET         = 'internal-secret'
+    process.env.INTERNAL_SECRET         = 'test-internal-secret'
     process.env.NEXT_PUBLIC_APP_URL     = 'http://localhost:3000'
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }))
-    mockCreateSupabaseAdmin.mockClear()
   })
 
   it('returns 400 on invalid signature', async () => {

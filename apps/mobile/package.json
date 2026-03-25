@@ -11,7 +11,8 @@
     "brand:default": "node scripts/switch-brand.js default && expo start",
     "brand:example-merchant": "node scripts/switch-brand.js example-merchant && expo start",
     "build:default": "node scripts/switch-brand.js default && eas build --profile production",
-    "build:example-merchant": "node scripts/switch-brand.js example-merchant && eas build --profile production-example-merchant"
+    "build:example-merchant": "node scripts/switch-brand.js example-merchant && eas build --profile production-example-merchant",
+    "test": "jest"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
@@ -43,7 +44,14 @@
     "zustand": "^4.5.2"
   },
   "devDependencies": {
+    "@testing-library/jest-native": "^5.4.3",
+    "@testing-library/react-native": "^13.3.3",
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.1.10",
+    "jest": "^30.3.0",
+    "jest-expo": "^55.0.11",
+    "msw": "^2.12.14",
+    "react-test-renderer": "19.1.0",
     "typescript": "~5.9.2"
   },
   "private": true

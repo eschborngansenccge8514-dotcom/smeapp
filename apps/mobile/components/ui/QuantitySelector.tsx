@@ -13,6 +13,7 @@ export function QuantitySelector({ value, min, max, onChange }: Props) {
           onPress={() => onChange(Math.max(min, value - 1))}
           disabled={value <= min}
           className="w-11 h-11 items-center justify-center"
+          testID="qty-decrement"
         >
           <Ionicons name="remove" size={18} color={value <= min ? '#d1d5db' : '#374151'} />
         </TouchableOpacity>
@@ -21,6 +22,7 @@ export function QuantitySelector({ value, min, max, onChange }: Props) {
           onPress={() => onChange(Math.min(max, value + 1))}
           disabled={value >= max}
           className="w-11 h-11 items-center justify-center"
+          testID="qty-increment"
         >
           <Ionicons name="add" size={18} color={value >= max ? '#d1d5db' : '#374151'} />
         </TouchableOpacity>
