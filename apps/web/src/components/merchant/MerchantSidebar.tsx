@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, ShoppingBag, Package,
   BarChart2, Users, Tag, Star, Wallet,
-  Store, Palette, ChevronRight
+  Store, Palette, ChevronRight, Truck
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -16,9 +16,10 @@ const NAV_ITEMS = [
   { label: 'Customers',      href: '/merchant/customers',      icon: Users },
   { label: 'Promotions',     href: '/merchant/promotions',     icon: Tag },
   { label: 'Reviews',        href: '/merchant/reviews',        icon: Star },
-  { label: 'Payouts',        href: '/merchant/payouts',        icon: Wallet },
-  { label: 'Store Settings', href: '/merchant/store-settings', icon: Store },
-  { label: 'Brand Settings', href: '/merchant/brand-settings', icon: Palette },
+  { label: 'Payouts',          href: '/merchant/payouts',           icon: Wallet },
+  { label: 'Store Settings',   href: '/merchant/store-settings',    icon: Store },
+  { label: 'Brand Settings',   href: '/merchant/brand-settings',    icon: Palette },
+  { label: 'Delivery',         href: '/merchant/settings/delivery', icon: Truck },
 ]
 
 export function MerchantSidebar({ store }: { store: any }) {

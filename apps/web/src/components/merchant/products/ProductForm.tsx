@@ -281,13 +281,13 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
         <div>
           <label className="text-sm font-medium text-gray-700 block mb-1">Product Name *</label>
           <input value={form.name} onChange={(e) => update('name', e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300"
             placeholder="e.g. Nasi Lemak Ayam" />
         </div>
         <div>
           <label className="text-sm font-medium text-gray-700 block mb-1">Description</label>
           <textarea value={form.description} onChange={(e) => update('description', e.target.value)}
-            rows={3} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            rows={3} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300"
             placeholder="Describe your product..." />
         </div>
       </div>
@@ -298,14 +298,14 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
           <label className="text-sm font-medium text-gray-700 block mb-1">Price (RM) *</label>
           <input type="number" min="0" step="0.01" value={form.price}
             onChange={(e) => update('price', e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300"
             placeholder="0.00" />
         </div>
         <div>
           <label className="text-sm font-medium text-gray-700 block mb-1">Stock Quantity *</label>
           <input type="number" min="0" value={form.stock_qty}
             onChange={(e) => update('stock_qty', e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300"
             placeholder="0" />
         </div>
       </div>
@@ -315,7 +315,7 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
         <div>
           <label className="text-sm font-medium text-gray-700 block mb-1">Category</label>
           <select value={form.category_id} onChange={(e) => update('category_id', e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300">
             <option value="">None</option>
             {categories.map((c) => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
           </select>
@@ -323,14 +323,14 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
         <div>
           <label className="text-sm font-medium text-gray-700 block mb-1">SKU</label>
           <input value={form.sku} onChange={(e) => update('sku', e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300"
             placeholder="SKU-001" />
         </div>
         <div>
           <label className="text-sm font-medium text-gray-700 block mb-1">Weight (kg)</label>
           <input type="number" min="0" step="0.001" value={form.weight_kg}
             onChange={(e) => update('weight_kg', e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300"
             placeholder="0.500" />
         </div>
       </div>
@@ -346,12 +346,12 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Brand</label>
               <input value={form.brand} onChange={(e) => update('brand', e.target.value)}
-                placeholder="e.g. Nestlé, Farm Fresh" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="e.g. Nestlé, Farm Fresh" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Sub-category</label>
               <input value={form.subcategory} onChange={(e) => update('subcategory', e.target.value)}
-                placeholder="e.g. Milk, Vegetables" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="e.g. Milk, Vegetables" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
           </div>
 
@@ -370,7 +370,7 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Origin Country</label>
               <input value={form.country_of_origin} onChange={(e) => update('country_of_origin', e.target.value)}
-                placeholder="e.g. Malaysia, Australia" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="e.g. Malaysia, Australia" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
           </div>
 
@@ -441,12 +441,12 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Generic Name</label>
               <input value={form.generic_name} onChange={(e) => update('generic_name', e.target.value)}
-                placeholder="e.g. Paracetamol" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="e.g. Paracetamol" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Brand</label>
               <input value={form.brand} onChange={(e) => update('brand', e.target.value)}
-                placeholder="e.g. Panadol" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="e.g. Panadol" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
           </div>
 
@@ -454,7 +454,7 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Pharmacy Category</label>
               <select value={form.category} onChange={(e) => update('category', e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300">
                 <option value="">None</option>
                 <option value="Pain Relief">Pain Relief</option>
                 <option value="Cold & Flu">Cold & Flu</option>
@@ -471,7 +471,7 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Rx Status</label>
               <select value={form.rx_status} onChange={(e) => update('rx_status', e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300">
                 <option value="otc">Over-the-Counter</option>
                 <option value="pharmacist_only">Pharmacist Only</option>
                 <option value="prescription">Prescription Required</option>
@@ -481,7 +481,7 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Dosage Form</label>
               <select value={form.dosage_form} onChange={(e) => update('dosage_form', e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300">
                 <option value="">None</option>
                 <option value="Tablet">Tablet</option>
                 <option value="Capsule">Capsule</option>
@@ -502,7 +502,7 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Dosage Strength</label>
               <input value={form.dosage_strength} onChange={(e) => update('dosage_strength', e.target.value)}
-                placeholder="e.g. 500mg, 10mg/5ml" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="e.g. 500mg, 10mg/5ml" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
           </div>
 
@@ -510,37 +510,37 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Active Ingredient</label>
               <input value={form.active_ingredient} onChange={(e) => update('active_ingredient', e.target.value)}
-                placeholder="e.g. Paracetamol 500mg" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="e.g. Paracetamol 500mg" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Pack Size</label>
               <input value={form.pack_size} onChange={(e) => update('pack_size', e.target.value)}
-                placeholder="e.g. 10 tablets, 100ml" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="e.g. 10 tablets, 100ml" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
           </div>
 
           <div>
              <label className="block text-sm font-medium text-gray-700 mb-1">Indications (comma separated)</label>
              <input value={form.indications} onChange={(e) => update('indications', e.target.value)}
-                placeholder="e.g. Fever, Headache, Joint Pain" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="e.g. Fever, Headache, Joint Pain" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
           </div>
 
           <div>
              <label className="block text-sm font-medium text-gray-700 mb-1">Warnings (comma separated)</label>
              <input value={form.warnings} onChange={(e) => update('warnings', e.target.value)}
-                placeholder="e.g. May cause drowsiness, Do not exceed 8 tablets in 24 hours" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="e.g. May cause drowsiness, Do not exceed 8 tablets in 24 hours" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Age Restriction</label>
               <input value={form.age_restriction} onChange={(e) => update('age_restriction', e.target.value)}
-                placeholder="e.g. Not for children under 12" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="e.g. Not for children under 12" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Registration No. (KKM/MAL)</label>
               <input value={form.registration_no} onChange={(e) => update('registration_no', e.target.value)}
-                placeholder="e.g. MAL12345678X" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="e.g. MAL12345678X" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
           </div>
 
@@ -548,12 +548,12 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
              <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Origin Country</label>
               <input value={form.country_of_origin} onChange={(e) => update('country_of_origin', e.target.value)}
-                placeholder="e.g. Malaysia, Australia" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="e.g. Malaysia, Australia" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Max Order Qty</label>
               <input type="number" min="1" value={form.max_order_qty} onChange={(e) => update('max_order_qty', e.target.value)}
-                placeholder="0" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="0" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
           </div>
 
@@ -603,12 +603,12 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Collection</label>
               <input value={form.collection} onChange={(e) => update('collection', e.target.value)}
-                placeholder="e.g. Summer 2024" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="e.g. Summer 2024" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
               <select value={form.gender_target} onChange={(e) => update('gender_target', e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300">
                 <option value="unisex">Unisex</option>
                 <option value="men">Men</option>
                 <option value="women">Women</option>
@@ -621,12 +621,12 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Material</label>
               <input value={form.material} onChange={(e) => update('material', e.target.value)}
-                placeholder="e.g. 100% Cotton" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="e.g. 100% Cotton" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Fit Type</label>
               <input value={form.fit_type} onChange={(e) => update('fit_type', e.target.value)}
-                placeholder="e.g. Slim Fit, Oversized" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="e.g. Slim Fit, Oversized" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
           </div>
 
@@ -634,12 +634,12 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
              <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Model Height / Info</label>
               <input value={form.model_height} onChange={(e) => update('model_height', e.target.value)}
-                placeholder="e.g. 175cm wearing size M" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="e.g. 175cm wearing size M" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tags (comma separated)</label>
               <input value={form.tags} onChange={(e) => update('tags', e.target.value)}
-                placeholder="e.g. vintage, summer, eco-friendly" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="e.g. vintage, summer, eco-friendly" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
           </div>
 
@@ -737,12 +737,12 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Brand</label>
               <input value={form.brand} onChange={(e) => update('brand', e.target.value)}
-                placeholder="e.g. Apple, Samsung" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="e.g. Apple, Samsung" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Model Number</label>
               <input value={form.model_number} onChange={(e) => update('model_number', e.target.value)}
-                placeholder="e.g. SM-S928B" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="e.g. SM-S928B" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
           </div>
 
@@ -750,7 +750,7 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Warranty (Months)</label>
               <input type="number" min="0" value={form.warranty_months} onChange={(e) => update('warranty_months', e.target.value)}
-                placeholder="0" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="0" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
             <div className="flex items-center gap-3 pt-6">
               <button type="button" onClick={() => update('is_official_warranty', !form.is_official_warranty)}
@@ -765,12 +765,12 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
              <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Quick Specs (comma separated)</label>
               <input value={form.quick_specs} onChange={(e) => update('quick_specs', e.target.value)}
-                placeholder={`e.g. 6.7" OLED, 5000mAh, 50MP Camera`} className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder={`e.g. 6.7" OLED, 5000mAh, 50MP Camera`} className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">In Box Items (comma separated)</label>
               <input value={form.in_box_items} onChange={(e) => update('in_box_items', e.target.value)}
-                placeholder="e.g. Phone, USB-C Cable, Manual" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                placeholder="e.g. Phone, USB-C Cable, Manual" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
             </div>
           </div>
 
@@ -885,7 +885,7 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Menu Category</label>
             <input type="text" value={form.category} onChange={(e) => update('category', e.target.value)}
               placeholder="e.g. Main Course, Drinks, Desserts"
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
           </div>
 
           {/* Spice Level */}

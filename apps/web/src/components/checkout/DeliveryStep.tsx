@@ -1,28 +1,35 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Loader2, Zap, Package, Store } from 'lucide-react'
+import { Loader2, Zap, Package, Store, Gift } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
 interface DeliveryStepProps {
   address: any; storeId: string
   deliveryType: string; quote: any
+  cartSubtotal?: number
   onUpdate: (type: string, fee: number, quote: any) => void
   onNext: () => void; onBack: () => void
 }
 
-export function DeliveryStep({ address, storeId, deliveryType, quote, onUpdate, onNext, onBack }: DeliveryStepProps) {
+interface QuoteResult {
+  enabledProviders?: { lalamove: boolean; easyparcel: boolean; self_pickup: boolean }
+  freeThreshold?: number | null
+  lalamove?: { fee: number; eta: string }
+  easyparcel?: { options: any[] }
+}
+
+export function DeliveryStep({
+  address, storeId, deliveryType, quote,
+  cartSubtotal = 0,
+  onUpdate, onNext, onBack,
+}: DeliveryStepProps) {
   const [loading, setLoading] = useState(false)
-  const [quotes, setQuotes] = useState<{
-    lalamove?: { fee: number; eta: string };
-    easyparcel?: { options: any[] };
-  }>({})
+  const [quotes, setQuotes] = useState<QuoteResult>({})
   const [selected, setSelected] = useState(deliveryType)
   const [selectedCourier, setSelectedCourier] = useState<any>(null)
 
-  useEffect(() => {
-    fetchQuotes()
-  }, [address, storeId])
+  useEffect(() => { fetchQuotes() }, [address, storeId])
 
   async function fetchQuotes() {
     if (!address) return
@@ -33,7 +40,7 @@ export function DeliveryStep({ address, storeId, deliveryType, quote, onUpdate, 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ storeId, address }),
       })
-      const data = await res.json()
+      const data: QuoteResult = await res.json()
       setQuotes(data)
     } catch {
       toast.error('Could not fetch delivery options')
@@ -42,23 +49,43 @@ export function DeliveryStep({ address, storeId, deliveryType, quote, onUpdate, 
   }
 
   function selectOption(type: string, fee: number, q: any) {
+    const effectiveFee =
+      quotes.freeThreshold != null && cartSubtotal >= quotes.freeThreshold ? 0 : fee
     setSelected(type)
-    onUpdate(type, fee, q)
+    onUpdate(type, effectiveFee, q)
   }
+
+  const providers = quotes.enabledProviders ?? { lalamove: true, easyparcel: true, self_pickup: true }
+  const isFreeDelivery = quotes.freeThreshold != null && cartSubtotal >= quotes.freeThreshold
 
   return (
     <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
       <h2 className="font-bold text-lg text-gray-900">Delivery Method</h2>
 
+      {/* Free delivery banner */}
+      {isFreeDelivery && (
+        <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+          <Gift size={16} className="text-green-600 shrink-0" />
+          <p className="text-sm text-green-700 font-medium">
+            🎉 Your order qualifies for free delivery!
+          </p>
+        </div>
+      )}
+      {quotes.freeThreshold != null && !isFreeDelivery && (
+        <p className="text-xs text-gray-400">
+          Add {formatPrice(quotes.freeThreshold - cartSubtotal)} more to get free delivery.
+        </p>
+      )}
+
       {loading ? (
         <div className="flex items-center justify-center py-10 gap-2 text-gray-400">
           <Loader2 size={20} className="animate-spin" />
-          <span>Fetching delivery options...</span>
+          <span>Fetching delivery options…</span>
         </div>
       ) : (
         <div className="space-y-3">
           {/* Lalamove */}
-          {quotes.lalamove && (
+          {providers.lalamove && quotes.lalamove && (
             <button
               onClick={() => selectOption('lalamove', quotes.lalamove!.fee, quotes.lalamove)}
               className={`w-full text-left p-4 rounded-2xl border-2 transition-colors
@@ -74,13 +101,15 @@ export function DeliveryStep({ address, storeId, deliveryType, quote, onUpdate, 
                     <p className="text-sm text-gray-500">Same-day · ETA {quotes.lalamove.eta}</p>
                   </div>
                 </div>
-                <span className="font-bold text-indigo-700">{formatPrice(quotes.lalamove.fee)}</span>
+                <span className="font-bold text-indigo-700">
+                  {isFreeDelivery ? <span className="text-green-600">FREE</span> : formatPrice(quotes.lalamove.fee)}
+                </span>
               </div>
             </button>
           )}
 
           {/* EasyParcel */}
-          {quotes.easyparcel?.options && quotes.easyparcel.options.length > 0 && (
+          {providers.easyparcel && quotes.easyparcel?.options && quotes.easyparcel.options.length > 0 && (
             <div className={`border-2 rounded-2xl transition-colors
               ${selected === 'easyparcel' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'}`}>
               <button
@@ -113,7 +142,9 @@ export function DeliveryStep({ address, storeId, deliveryType, quote, onUpdate, 
                         <p className="font-medium text-sm text-gray-900">{opt.courier_name}</p>
                         <p className="text-xs text-gray-400">{opt.delivery_time}</p>
                       </div>
-                      <span className="font-bold text-sm text-indigo-600">{formatPrice(opt.price)}</span>
+                      <span className="font-bold text-sm text-indigo-600">
+                        {isFreeDelivery ? <span className="text-green-600">FREE</span> : formatPrice(opt.price)}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -122,24 +153,32 @@ export function DeliveryStep({ address, storeId, deliveryType, quote, onUpdate, 
           )}
 
           {/* Self Pickup */}
-          <button
-            onClick={() => selectOption('self_pickup', 0, null)}
-            className={`w-full text-left p-4 rounded-2xl border-2 transition-colors
-              ${selected === 'self_pickup' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300'}`}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-                  <Store size={20} className="text-green-600" />
+          {providers.self_pickup && (
+            <button
+              onClick={() => selectOption('self_pickup', 0, null)}
+              className={`w-full text-left p-4 rounded-2xl border-2 transition-colors
+                ${selected === 'self_pickup' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300'}`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+                    <Store size={20} className="text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900">Self Pickup</p>
+                    <p className="text-sm text-gray-500">Collect from store — Free</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-gray-900">Self Pickup</p>
-                  <p className="text-sm text-gray-500">Collect from store — Free</p>
-                </div>
+                <span className="font-bold text-green-600">FREE</span>
               </div>
-              <span className="font-bold text-green-600">FREE</span>
-            </div>
-          </button>
+            </button>
+          )}
+
+          {!providers.lalamove && !providers.easyparcel && !providers.self_pickup && (
+            <p className="text-sm text-gray-400 text-center py-8">
+              This store has not configured any delivery options yet.
+            </p>
+          )}
         </div>
       )}
 
@@ -156,3 +195,4 @@ export function DeliveryStep({ address, storeId, deliveryType, quote, onUpdate, 
     </div>
   )
 }
+

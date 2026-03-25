@@ -4,7 +4,8 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Store, Users, ShoppingBag,
   AlertTriangle, CreditCard, Wallet, Palette,
-  Tag, Megaphone, Settings, LogOut, ChevronRight
+  Tag, Megaphone, Settings, LogOut, ChevronRight,
+  Database
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -19,6 +20,7 @@ const NAV_ITEMS = [
   { label: 'Brands',        href: '/admin/brands',         icon: Palette },
   { label: 'Categories',    href: '/admin/categories',     icon: Tag },
   { label: 'Announcements', href: '/admin/announcements',  icon: Megaphone },
+  { label: 'Seed Data',     href: '/admin/seed',           icon: Database },
   { label: 'Settings',      href: '/admin/settings',       icon: Settings },
 ]
 

@@ -79,7 +79,7 @@ export function OnboardingForm({ userId }: { userId: string }) {
       <div>
         <label className="text-sm font-medium text-gray-700 block mb-1">Category *</label>
         <select value={form.category} onChange={(e) => update('category', e.target.value)}
-          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300">
           <option value="">Select category</option>
           {CATEGORIES.map((c) => <option key={c} value={c.toLowerCase()}>{c}</option>)}
         </select>
@@ -103,7 +103,7 @@ export function OnboardingForm({ userId }: { userId: string }) {
 
 function Field({ label, value, onChange, placeholder, multiline = false }: any) {
   const props = { value, onChange: (e: any) => onChange(e.target.value), placeholder,
-    className: 'w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300' }
+    className: 'w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300' }
   return (
     <div>
       <label className="text-sm font-medium text-gray-700 block mb-1">{label}</label>

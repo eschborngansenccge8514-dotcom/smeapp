@@ -63,7 +63,7 @@ export function BrandSettingsForm({ store }: { store: any }) {
         <label className="text-sm font-medium text-gray-700 block mb-1">App Name</label>
         <input value={form.brand_app_name}
           onChange={(e) => setForm((f) => ({ ...f, brand_app_name: e.target.value }))}
-          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300"
           placeholder="My Store App" />
       </div>
 
@@ -76,7 +76,7 @@ export function BrandSettingsForm({ store }: { store: any }) {
               className="w-12 h-10 rounded-lg border border-gray-200 cursor-pointer" />
             <input value={form.brand_primary_color}
               onChange={(e) => setForm((f) => ({ ...f, brand_primary_color: e.target.value }))}
-              className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 font-mono focus:outline-none focus:ring-2 focus:ring-indigo-300"
               placeholder="#6366F1" />
           </div>
         </div>
@@ -101,7 +101,7 @@ export function BrandSettingsForm({ store }: { store: any }) {
           <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-300">
             <input value={form.brand_subdomain}
               onChange={(e) => setForm((f) => ({ ...f, brand_subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,'') }))}
-              className="flex-1 px-4 py-2.5 text-sm focus:outline-none"
+              className="flex-1 px-4 py-2.5 text-sm text-gray-900 focus:outline-none"
               placeholder="mystore" />
             <span className="px-3 bg-gray-50 text-gray-400 text-sm border-l border-gray-200 py-2.5">
               .yourdomain.com
@@ -112,7 +112,7 @@ export function BrandSettingsForm({ store }: { store: any }) {
           <label className="text-sm font-medium text-gray-700 block mb-1">Custom Domain (optional)</label>
           <input value={form.brand_custom_domain}
             onChange={(e) => setForm((f) => ({ ...f, brand_custom_domain: e.target.value }))}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300"
             placeholder="order.mybrand.com.my" />
           <p className="text-xs text-gray-400 mt-1">
             Point your domain's CNAME to <code className="bg-gray-100 px-1 rounded">cname.vercel-dns.com</code>
@@ -130,7 +130,7 @@ export function BrandSettingsForm({ store }: { store: any }) {
             <label className="text-sm font-medium text-gray-700 block mb-1">Collection Label (e.g. Featured, Winter 24)</label>
             <input value={form.brand_collection_label}
               onChange={(e) => setForm((f) => ({ ...f, brand_collection_label: e.target.value }))}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300"
               placeholder="Seasonal Collection" />
           </div>
           

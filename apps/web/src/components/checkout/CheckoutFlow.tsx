@@ -82,6 +82,7 @@ export function CheckoutFlow({ addresses, profile, userId }: any) {
           <DeliveryStep
             address={state.address} storeId={storeId!}
             deliveryType={state.deliveryType} quote={state.deliveryQuote}
+            cartSubtotal={subtotal}
             onUpdate={(type: any, fee: any, quote: any) => {
               update('deliveryType', type)
               update('deliveryFee', fee)

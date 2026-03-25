@@ -56,11 +56,11 @@ export function OpeningHoursForm({ storeId, hours }: { storeId: string; hours: a
               <div className="flex items-center gap-2">
                 <input type="time" value={day.open_time}
                   onChange={(e) => update(i, 'open_time', e.target.value)}
-                  className="border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                  className="border border-gray-200 rounded-lg px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
                 <span className="text-gray-400 text-sm">–</span>
                 <input type="time" value={day.close_time}
                   onChange={(e) => update(i, 'close_time', e.target.value)}
-                  className="border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                  className="border border-gray-200 rounded-lg px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300" />
               </div>
             ) : (
               <span className="text-sm text-gray-400">Closed</span>

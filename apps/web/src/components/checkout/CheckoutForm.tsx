@@ -173,7 +173,7 @@ export function CheckoutForm({ user, profile }: { user: any; profile: any }) {
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               rows={2}
-              className={`w-full border rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300
+              className={`w-full border rounded-xl px-4 py-3 text-sm text-gray-900 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300
                 ${errors.address ? 'border-red-400' : 'border-gray-200'}`}
               placeholder="No. 12, Jalan Harmoni 3/1, Taman Harmoni"
             />
@@ -185,7 +185,7 @@ export function CheckoutForm({ user, profile }: { user: any; profile: any }) {
               <input
                 value={postcode}
                 onChange={(e) => setPostcode(e.target.value.replace(/\D/g, '').slice(0, 5))}
-                className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300
+                className={`w-full border rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300
                   ${errors.postcode ? 'border-red-400' : 'border-gray-200'}`}
                 placeholder="47810"
                 maxLength={5}
@@ -197,7 +197,7 @@ export function CheckoutForm({ user, profile }: { user: any; profile: any }) {
               <input
                 value={state}
                 onChange={(e) => setState(e.target.value)}
-                className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300
+                className={`w-full border rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300
                   ${errors.state ? 'border-red-400' : 'border-gray-200'}`}
                 placeholder="Selangor"
               />
@@ -210,7 +210,7 @@ export function CheckoutForm({ user, profile }: { user: any; profile: any }) {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300"
               placeholder="Leave at door, no spicy..."
             />
           </div>
