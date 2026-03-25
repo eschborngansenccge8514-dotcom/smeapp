@@ -82,3 +82,85 @@ export interface FnbStore {
 export interface OperatingHours {
   [day: string]: { open: string; close: string; closed?: boolean }
 }
+
+export interface GroceryProduct {
+  id: string
+  name: string
+  description: string | null
+  price: number
+  image_url: string | null
+  is_available: boolean
+  stock_qty: number
+  category: string | null            // department: "Fresh Produce", "Dairy", etc.
+  subcategory?: string | null        // "Vegetables", "Fruits", etc.
+  brand?: string | null
+  weight_value?: number | null       // e.g. 500
+  weight_unit?: 'g' | 'kg' | 'ml' | 'L' | 'pcs' | 'pack' | null
+  price_per_unit?: number | null     // price per 100g / per L
+  price_per_unit_label?: string | null // "per 100g", "per L"
+  is_organic?: boolean
+  is_local?: boolean
+  is_on_promotion?: boolean
+  promotion_label?: string | null    // "2 for RM5", "Buy 3 Free 1"
+  promotion_price?: number | null    // promotional price
+  min_order_qty?: number | null
+  max_order_qty?: number | null
+  country_of_origin?: string | null
+  expiry_note?: string | null        // "Best before 3 days"
+  low_stock_threshold?: number       // show "only X left" warning
+}
+
+export interface GroceryDepartment {
+  name: string
+  icon: string
+  subcategories: string[]
+}
+
+export interface GroceryBundle {
+  id: string
+  title: string                      // "Buy 2 Free 1 — Fresh Milk"
+  subtitle?: string
+  products: GroceryProduct[]
+  bundle_price?: number
+  bundle_type: 'multi_buy' | 'combo' | 'buy_x_free_y'
+  buy_qty?: number
+  free_qty?: number
+  end_date?: string
+}
+
+export type RxStatus = 'otc' | 'prescription' | 'pharmacist_only' | 'supplement'
+
+export interface PharmacyProduct {
+  id: string
+  name: string
+  generic_name?: string | null        // e.g. "Paracetamol" for "Panadol"
+  description: string | null
+  price: number
+  image_url: string | null
+  is_available: boolean
+  stock_qty: number
+  category: string | null             // "Pain Relief", "Cold & Flu", etc.
+  brand?: string | null
+  rx_status: RxStatus                 // OTC / Rx / Pharmacist / Supplement
+  dosage_form?: string | null         // "Tablet", "Capsule", "Syrup", "Cream"
+  dosage_strength?: string | null     // "500mg", "10mg/5ml"
+  pack_size?: string | null           // "10 tablets", "100ml"
+  active_ingredient?: string | null
+  indications?: string[] | null       // ["Fever", "Headache", "Pain Relief"]
+  warnings?: string[] | null          // ["Do not exceed 8 tablets in 24 hours"]
+  age_restriction?: string | null     // "Not for children under 12"
+  requires_consultation?: boolean
+  country_of_origin?: string | null
+  registration_no?: string | null     // KKM/MAL registration number
+  is_on_promotion?: boolean
+  promotion_price?: number | null
+  promotion_label?: string | null
+  low_stock_threshold?: number
+  max_order_qty?: number | null
+}
+
+export interface PharmacyCategory {
+  name: string
+  icon: string
+  subcategories: string[]
+}

@@ -34,6 +34,21 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
     is_halal: product?.is_halal ?? false,
     is_vegan: product?.is_vegan ?? false,
     is_vegetarian: product?.is_vegetarian ?? false,
+    // Grocery terms
+    subcategory: product?.subcategory ?? '',
+    brand: product?.brand ?? '',
+    weight_value: product?.weight_value?.toString() ?? '',
+    weight_unit: product?.weight_unit ?? 'g',
+    is_organic: product?.is_organic ?? false,
+    is_local: product?.is_local ?? false,
+    is_on_promotion: product?.is_on_promotion ?? false,
+    promotion_label: product?.promotion_label ?? '',
+    promotion_price: product?.promotion_price?.toString() ?? '',
+    min_order_qty: product?.min_order_qty?.toString() ?? '1',
+    max_order_qty: product?.max_order_qty?.toString() ?? '',
+    country_of_origin: product?.country_of_origin ?? '',
+    expiry_note: product?.expiry_note ?? '',
+    low_stock_threshold: product?.low_stock_threshold?.toString() ?? '5',
   })
   const [imageUrls, setImageUrls] = useState<string[]>(product?.image_urls ?? [])
   const [variants, setVariants] = useState<{ name: string; price: string; stock: string }[]>(
@@ -96,6 +111,21 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
         is_vegan: form.is_vegan,
         is_vegetarian: form.is_vegetarian,
         image_urls: imageUrls,
+        // Grocery
+        subcategory: form.subcategory.trim() || null,
+        brand: form.brand.trim() || null,
+        weight_value: form.weight_value ? parseFloat(form.weight_value) : null,
+        weight_unit: form.weight_unit || null,
+        is_organic: form.is_organic,
+        is_local: form.is_local,
+        is_on_promotion: form.is_on_promotion,
+        promotion_label: form.promotion_label.trim() || null,
+        promotion_price: form.promotion_price ? parseFloat(form.promotion_price) : null,
+        min_order_qty: form.min_order_qty ? parseInt(form.min_order_qty) : null,
+        max_order_qty: form.max_order_qty ? parseInt(form.max_order_qty) : null,
+        country_of_origin: form.country_of_origin.trim() || null,
+        expiry_note: form.expiry_note.trim() || null,
+        low_stock_threshold: form.low_stock_threshold ? parseInt(form.low_stock_threshold) : 5,
       }
 
       let productId = product?.id
@@ -222,6 +252,101 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
             placeholder="0.500" />
         </div>
       </div>
+
+      {/* Grocery specific fields */}
+      {(storeCategory?.includes('Grocery') || storeCategory?.includes('Market')) && (
+        <div className="border-t border-gray-100 pt-5 space-y-4">
+          <p className="text-sm font-bold text-gray-700 flex items-center gap-2">
+            🛒 Grocery & Market Details
+          </p>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Brand</label>
+              <input value={form.brand} onChange={(e) => update('brand', e.target.value)}
+                placeholder="e.g. Nestlé, Farm Fresh" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Sub-category</label>
+              <input value={form.subcategory} onChange={(e) => update('subcategory', e.target.value)}
+                placeholder="e.g. Milk, Vegetables" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Weight / Volume</label>
+              <div className="flex gap-2">
+                <input type="number" step="0.01" value={form.weight_value} onChange={(e) => update('weight_value', e.target.value)}
+                  placeholder="500" className="flex-1 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                <select value={form.weight_unit} onChange={(e) => update('weight_unit', e.target.value)}
+                  className="w-24 border border-gray-200 rounded-xl px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                  {['g','kg','ml','L','pcs','pack'].map(u => <option key={u} value={u}>{u}</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Origin Country</label>
+              <input value={form.country_of_origin} onChange={(e) => update('country_of_origin', e.target.value)}
+                placeholder="e.g. Malaysia, Australia" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+            </div>
+          </div>
+
+          <div className="bg-orange-50 rounded-xl p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <button type="button" onClick={() => update('is_on_promotion', !form.is_on_promotion)}
+                className={`w-10 h-5 rounded-full relative transition-colors ${form.is_on_promotion ? 'bg-orange-500' : 'bg-gray-200'}`}>
+                <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${form.is_on_promotion ? 'translate-x-5' : ''}`} />
+              </button>
+              <span className="text-sm font-bold text-orange-700">On Promotion?</span>
+            </div>
+
+            {form.is_on_promotion && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-orange-700 mb-1 uppercase">Promo Price (RM)</label>
+                  <input type="number" step="0.01" value={form.promotion_price} onChange={(e) => update('promotion_price', e.target.value)}
+                    className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm focus:outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-orange-700 mb-1 uppercase">Promo Label</label>
+                  <input value={form.promotion_label} onChange={(e) => update('promotion_label', e.target.value)}
+                    placeholder="e.g. 20% OFF, Buy 2 Free 1" className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm focus:outline-none" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Min. Order Qty</label>
+              <input type="number" min="1" value={form.min_order_qty} onChange={(e) => update('min_order_qty', e.target.value)}
+                className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Low Stock Alert at</label>
+              <input type="number" min="0" value={form.low_stock_threshold} onChange={(e) => update('low_stock_threshold', e.target.value)}
+                className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none" />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {[
+              { key: 'is_organic', label: '🌿 Organic', active: form.is_organic },
+              { key: 'is_local',   label: '🇲🇾 Local',   active: form.is_local },
+              { key: 'is_popular', label: '🔥 Popular', active: form.is_popular },
+              { key: 'is_new',     label: '✨ New',     active: form.is_new },
+            ].map((tag) => (
+              <button key={tag.key} type="button" onClick={() => update(tag.key, !tag.active)}
+                className={`px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
+                  tag.active ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-200'
+                }`}>
+                {tag.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* F&B specific fields — shown only for F&B stores */}
       {storeCategory?.includes('Food') && (

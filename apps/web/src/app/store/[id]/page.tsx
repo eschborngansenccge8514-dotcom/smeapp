@@ -2,7 +2,9 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { resolveIndustry } from '@/lib/industry'
 import { FnbStorePage } from '@/components/industry/fnb/FnbStorePage'
-import type { FnbStore, FnbProduct } from '@/lib/industry/types'
+import { GroceryStorePage } from '@/components/industry/grocery/GroceryStorePage'
+import { PharmacyStorePage } from '@/components/industry/pharmacy/PharmacyStorePage'
+import type { FnbStore, FnbProduct, GroceryProduct, PharmacyProduct } from '@/lib/industry/types'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -34,9 +36,37 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
     )
   }
 
-  // Other industries will be added here in future phases
-  // if (industry === 'grocery') return <GroceryStorePage ... />
-  // if (industry === 'fashion') return <FashionStorePage ... />
+  if (industry === 'grocery') {
+    const { data: bundlesData } = await supabase
+      .from('bundles')
+      .select('*, bundle_products(*, products(*))')
+      .eq('store_id', id)
+      .eq('is_active', true)
+      .gt('end_date', new Date().toISOString())
+
+    // Flatten bundles to match GroceryBundle interface
+    const bundles = (bundlesData ?? []).map((b: any) => ({
+      ...b,
+      products: b.bundle_products.map((bp: any) => bp.products)
+    }))
+
+    return (
+      <GroceryStorePage
+        store={store}
+        products={(products ?? []) as GroceryProduct[]}
+        bundles={bundles}
+      />
+    )
+  }
+
+  if (industry === 'pharmacy') {
+    return (
+      <PharmacyStorePage
+        store={store}
+        products={(products ?? []) as PharmacyProduct[]}
+      />
+    )
+  }
 
   // Default fallback (existing generic layout)
   return (
