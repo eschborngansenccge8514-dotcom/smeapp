@@ -8,7 +8,8 @@
     "./types": "./src/types.ts",
     "./mobile": "./src/mobile.ts",
     "./web": "./src/web.ts",
-    "./stores/cartStore": "./src/stores/cartStore.ts"
+    "./stores/cartStore": "./src/stores/cartStore.ts",
+    "./gmc/*": "./src/gmc/*.ts"
   },
   "main": "./src/index.ts",
   "scripts": {

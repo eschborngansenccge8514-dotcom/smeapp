@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       id, store_id, name, description, price, image_urls,
       stock_qty, is_available, sku, weight_kg,
       avg_rating, review_count, gmc_offer_id,
-      stores(name),
+      stores(name, gmc_merchant_id, gmc_service_account),
       categories(name)
     `)
     .eq('id', productId)
@@ -45,15 +45,21 @@ export async function POST(req: NextRequest) {
     store_name:   (product.stores as any)?.name ?? 'Store',
   }
 
+  const storeData = product.stores as any
+  const config = (storeData?.gmc_merchant_id && storeData?.gmc_service_account) ? {
+    merchantId: storeData.gmc_merchant_id,
+    serviceAccountJson: storeData.gmc_service_account
+  } : undefined
+
   try {
     let result: any
 
     if (action === 'delete') {
       const offerId = product.gmc_offer_id ?? product.id
-      const ok = await deleteGMCProduct(offerId)
+      const ok = await deleteGMCProduct(offerId, config)
       result = { success: ok, offerId }
     } else {
-      result = await syncProduct(gmcProduct)
+      result = await syncProduct(gmcProduct, config)
     }
 
     // Update product GMC status

@@ -1,10 +1,15 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { RefreshCw, CheckCircle2, XCircle, Clock, ExternalLink, AlertTriangle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export function GMCSyncPanel({ stats, recentLogs, failedProducts }: any) {
   const [syncing, setSyncing] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   async function triggerSync(type: 'all' | 'failed') {
     setSyncing(type)
@@ -84,7 +89,7 @@ export function GMCSyncPanel({ stats, recentLogs, failedProducts }: any) {
           </h3>
           <p className="text-sm text-gray-400">
             {stats?.last_sync_at
-              ? `Last full sync: ${new Date(stats.last_sync_at).toLocaleString('en-MY')}`
+              ? `Last full sync: ${mounted ? new Date(stats.last_sync_at).toLocaleString('en-MY') : '...'}`
               : 'Never fully synced'
             }
           </p>
@@ -138,7 +143,7 @@ export function GMCSyncPanel({ stats, recentLogs, failedProducts }: any) {
                   <div>
                     <p className="font-semibold text-sm text-gray-900">{p.name}</p>
                     <p className="text-xs text-gray-500 mt-0.5">{p.stores?.name} · {
-                      p.gmc_synced_at ? new Date(p.gmc_synced_at).toLocaleString('en-MY') : 'Never'
+                      p.gmc_synced_at ? (mounted ? new Date(p.gmc_synced_at).toLocaleString('en-MY') : '...') : 'Never'
                     }</p>
                   </div>
                   <button
@@ -174,7 +179,7 @@ export function GMCSyncPanel({ stats, recentLogs, failedProducts }: any) {
                       {log.products?.name ?? log.offer_id}
                     </p>
                     <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap">
-                      {new Date(log.synced_at).toLocaleTimeString('en-MY')}
+                      {mounted ? new Date(log.synced_at).toLocaleTimeString('en-MY') : '...'}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mt-1">

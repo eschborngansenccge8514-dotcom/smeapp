@@ -1,12 +1,13 @@
 import {
   getProductInputsClient,
   getProductsClient,
-  ACCOUNT_NAME,
+  getAccountName,
   TARGET_COUNTRY,
   LANGUAGE,
   FEED_LABEL,
   CURRENCY,
   APP_URL,
+  GMCClientConfig,
 } from './client'
 import { getOrCreatePrimaryDataSource } from './dataSource'
 
@@ -37,7 +38,7 @@ export interface SyncResult {
 }
 
 // ─── Build GMC product payload ───────────────────────────────────
-function buildProductInput(product: GMCProduct, dataSource: string) {
+function buildProductInput(product: GMCProduct, dataSource: string, config?: GMCClientConfig) {
   const inStock     = product.is_available && product.stock_qty > 0
   const productUrl  = `${APP_URL}/store/${product.store_id}/product/${product.id}`
   const offerId     = product.sku ?? product.id
@@ -86,7 +87,7 @@ function buildProductInput(product: GMCProduct, dataSource: string) {
   }
 
   return {
-    parent:       ACCOUNT_NAME,
+    parent:       getAccountName(config),
     dataSource,
     productInput: {
       offerId,
@@ -98,11 +99,11 @@ function buildProductInput(product: GMCProduct, dataSource: string) {
 }
 
 // ─── Insert / Update single product ─────────────────────────────
-export async function syncProduct(product: GMCProduct): Promise<SyncResult> {
+export async function syncProduct(product: GMCProduct, config?: GMCClientConfig): Promise<SyncResult> {
   try {
-    const client     = getProductInputsClient()
-    const dataSource = await getOrCreatePrimaryDataSource()
-    const request    = buildProductInput(product, dataSource)
+    const client     = getProductInputsClient(config)
+    const dataSource = await getOrCreatePrimaryDataSource(config)
+    const request    = buildProductInput(product, dataSource, config)
 
     const [response] = (await client.insertProductInput(request)) as any
 
@@ -123,10 +124,11 @@ export async function syncProduct(product: GMCProduct): Promise<SyncResult> {
 }
 
 // ─── Delete single product from GMC ─────────────────────────────
-export async function deleteGMCProduct(offerId: string): Promise<boolean> {
+export async function deleteGMCProduct(offerId: string, config?: GMCClientConfig): Promise<boolean> {
   try {
-    const client     = getProductInputsClient()
-    const dataSource = await getOrCreatePrimaryDataSource()
+    const client     = getProductInputsClient(config)
+    const dataSource = await getOrCreatePrimaryDataSource(config)
+    const accountName = getAccountName(config)
 
     // Name format: accounts/{account}/dataSources/{dataSource}/productInputs/{productInputId}
     // productInputId format: contentLanguage~feedLabel~offerId
@@ -134,7 +136,7 @@ export async function deleteGMCProduct(offerId: string): Promise<boolean> {
     const dsId = dataSource.split('/').pop()
 
     await client.deleteProductInput({
-      name: `${ACCOUNT_NAME}/dataSources/${dsId}/productInputs/${productInputId}`,
+      name: `${accountName}/dataSources/${dsId}/productInputs/${productInputId}`,
     })
     return true
   } catch (err: any) {
@@ -144,7 +146,7 @@ export async function deleteGMCProduct(offerId: string): Promise<boolean> {
 }
 
 // ─── Batch sync up to 250 products ──────────────────────────────
-export async function batchSyncProducts(products: GMCProduct[]): Promise<{
+export async function batchSyncProducts(products: GMCProduct[], config?: GMCClientConfig): Promise<{
   succeeded: number
   failed:    number
   errors:    SyncResult[]
@@ -154,7 +156,7 @@ export async function batchSyncProducts(products: GMCProduct[]): Promise<{
 
   for (let i = 0; i < products.length; i += BATCH_SIZE) {
     const batch = products.slice(i, i + BATCH_SIZE)
-    const batchResults = await Promise.allSettled(batch.map(syncProduct))
+    const batchResults = await Promise.allSettled(batch.map(p => syncProduct(p, config)))
     batchResults.forEach((r) => {
       if (r.status === 'fulfilled') results.push(r.value)
       else results.push({ productId: 'unknown', offerId: 'unknown', success: false, error: (r as any).reason?.message })
@@ -172,11 +174,12 @@ export async function batchSyncProducts(products: GMCProduct[]): Promise<{
 }
 
 // ─── Get GMC product status ──────────────────────────────────────
-export async function getGMCProductStatus(offerId: string): Promise<any> {
+export async function getGMCProductStatus(offerId: string, config?: GMCClientConfig): Promise<any> {
   try {
-    const client = getProductsClient()
-    const dsId   = (await getOrCreatePrimaryDataSource()).split('/').pop()
-    const name   = `${ACCOUNT_NAME}/products/online~${LANGUAGE}~${FEED_LABEL}~${offerId}`
+    const client = getProductsClient(config)
+    const accountName = getAccountName(config)
+    const dsId   = (await getOrCreatePrimaryDataSource(config)).split('/').pop()
+    const name   = `${accountName}/products/online~${LANGUAGE}~${FEED_LABEL}~${offerId}`
     const [product] = (await client.getProduct({ name })) as any
     return product
   } catch {

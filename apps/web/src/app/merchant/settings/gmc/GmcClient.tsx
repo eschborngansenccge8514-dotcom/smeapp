@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
-import { ShoppingBag, RefreshCw, CheckCircle, AlertTriangle, ExternalLink, ChevronRight } from 'lucide-react'
+import { ShoppingBag, RefreshCw, CheckCircle, AlertTriangle, ExternalLink, ChevronRight, Settings, Key, Database, Save, Info } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface Props {
@@ -18,6 +18,34 @@ export default function GmcClient({ store, gmcStats: initialStats }: Props) {
   const [enabled, setEnabled] = useState(store.gmc_enabled ?? false)
   const [syncing, setSyncing] = useState(false)
   const [stats, setStats] = useState(initialStats)
+  const [merchantId, setMerchantId] = useState(store.gmc_merchant_id || '')
+  const [serviceAccountJson, setServiceAccountJson] = useState(store.gmc_service_account || '')
+  const [savingSettings, setSavingSettings] = useState(false)
+
+  async function saveGmcSettings() {
+    setSavingSettings(true)
+    try {
+      // Basic JSON validation if provided
+      if (serviceAccountJson) {
+        JSON.parse(serviceAccountJson)
+      }
+
+      const { error } = await supabase
+        .from('stores')
+        .update({
+          gmc_merchant_id: merchantId.trim(),
+          gmc_service_account: serviceAccountJson.trim()
+        })
+        .eq('id', store.id)
+      
+      if (error) throw error
+      toast.success('GMC Credentials updated successfully')
+    } catch (err: any) {
+      toast.error(err.message?.includes('JSON') ? 'Invalid JSON format' : 'Failed to save settings')
+    } finally {
+      setSavingSettings(false)
+    }
+  }
 
   async function toggleGMC() {
     const newValue = !enabled
@@ -192,6 +220,60 @@ export default function GmcClient({ store, gmcStats: initialStats }: Props) {
             
             <button className="mt-8 text-amber-700 font-bold flex items-center gap-2 hover:gap-3 transition-all duration-300">
                Learn more about Merchant Policies <ChevronRight size={18} />
+            </button>
+          </div>
+
+          {/* Advanced Credentials */}
+          <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-xl shadow-indigo-50/50 space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3">
+                <Settings size={22} className="text-gray-400" />
+                Advanced Configuration
+              </h3>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-gray-400 bg-gray-50 px-3 py-1 rounded-full uppercase">
+                <Info size={12} /> Optional Overrides
+              </div>
+            </div>
+
+            <p className="text-sm text-gray-500 bg-blue-50/50 p-4 rounded-2xl border border-blue-50 leading-relaxed">
+              By default, we use the marketplace's global Merchant Center account. If you wish to use your own dedicated account, provide your credentials below.
+            </p>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700 flex items-center gap-2 ml-1">
+                  <Database size={14} /> GMC Merchant ID
+                </label>
+                <input
+                  type="text"
+                  value={merchantId}
+                  onChange={(e) => setMerchantId(e.target.value)}
+                  placeholder="e.g. 531284901"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-3.5 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium text-gray-900"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700 flex items-center gap-2 ml-1">
+                  <Key size={14} /> Service Account JSON
+                </label>
+                <textarea
+                  value={serviceAccountJson}
+                  onChange={(e) => setServiceAccountJson(e.target.value)}
+                  placeholder='{ "type": "service_account", ... }'
+                  rows={6}
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-3.5 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-mono text-xs text-gray-600 leading-relaxed"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={saveGmcSettings}
+              disabled={savingSettings}
+              className="w-full flex items-center justify-center gap-3 bg-gray-900 text-white py-4 rounded-2xl font-bold hover:bg-black disabled:opacity-50 transition-all duration-300 shadow-lg shadow-gray-200"
+            >
+              {savingSettings ? <RefreshCw className="animate-spin" size={20} /> : <Save size={20} />}
+              Save Configuration
             </button>
           </div>
         </div>

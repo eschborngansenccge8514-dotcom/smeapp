@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
       id, store_id, name, description, price, image_urls,
       stock_qty, is_available, sku, weight_kg, avg_rating,
       review_count, gmc_offer_id,
-      stores(name),
+      stores(name, gmc_merchant_id, gmc_service_account),
       categories(name)
     `)
     .eq('store_id', storeId)
@@ -46,7 +46,13 @@ export async function POST(req: NextRequest) {
     store_name:   (p.stores as any)?.name ?? 'Store',
   }))
 
-  const results = await batchSyncProducts(gmcProducts)
+  const storeData = products[0]?.stores as any
+  const config = (storeData?.gmc_merchant_id && storeData?.gmc_service_account) ? {
+    merchantId: storeData.gmc_merchant_id,
+    serviceAccountJson: storeData.gmc_service_account
+  } : undefined
+
+  const results = await batchSyncProducts(gmcProducts, config)
 
   // Bulk update product gmc_status
   const successIds = gmcProducts
