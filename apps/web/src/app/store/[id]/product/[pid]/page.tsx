@@ -5,6 +5,7 @@ import { ProductInfo } from '@/components/products/ProductInfo'
 import { ProductReviews } from '@/components/products/ProductReviews'
 import { RelatedProducts } from '@/components/products/RelatedProducts'
 import type { Metadata } from 'next'
+import { ProductStructuredData } from '@/components/seo/ProductStructuredData'
 
 interface Props {
   params: Promise<{ id: string; pid: string }>
@@ -67,6 +68,7 @@ export default async function ProductDetailPage({ params }: Props) {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-10">
+      <ProductStructuredData product={{ ...product, product_reviews: reviews }} storeId={id} />
       {/* Breadcrumb */}
       <nav className="text-sm text-gray-400 flex items-center gap-2">
         <a href="/" className="hover:text-indigo-600">Home</a>

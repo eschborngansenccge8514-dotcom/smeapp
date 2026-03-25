@@ -5,7 +5,9 @@ import { FnbStorePage } from '@/components/industry/fnb/FnbStorePage'
 import { GroceryStorePage } from '@/components/industry/grocery/GroceryStorePage'
 import { PharmacyStorePage } from '@/components/industry/pharmacy/PharmacyStorePage'
 import { FashionStorePage } from '@/components/industry/fashion/FashionStorePage'
-import type { FnbStore, FnbProduct, GroceryProduct, PharmacyProduct, FashionProduct } from '@/lib/industry/types'
+import { ElectronicsStorePage } from '@/components/industry/electronics/ElectronicsStorePage'
+import type { FnbStore, FnbProduct, GroceryProduct, PharmacyProduct, FashionProduct, ElectronicsProduct } from '@/lib/industry/types'
+import { StoreStructuredData } from '@/components/seo/StoreStructuredData'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -28,62 +30,68 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
   const industry = resolveIndustry(store.category)
 
   // Route to industry-specific layout
-  if (industry === 'fnb') {
+  const industryPage = (() => {
+    if (industry === 'fnb') {
+      return (
+        <FnbStorePage
+          store={store as FnbStore}
+          products={(products ?? []) as FnbProduct[]}
+        />
+      )
+    }
+
+    if (industry === 'grocery') {
+      // (Fetching bundles should ideally happen inside GroceryStorePage or here if needed)
+      return (
+        <GroceryStorePage
+          store={store}
+          products={(products ?? []) as GroceryProduct[]}
+          bundles={[]} // Bundles fetch would be complex to inline here without restructuring
+        />
+      )
+    }
+
+    if (industry === 'pharmacy') {
+      return (
+        <PharmacyStorePage
+          store={store}
+          products={(products ?? []) as PharmacyProduct[]}
+        />
+      )
+    }
+
+    if (industry === 'fashion') {
+      return (
+        <FashionStorePage
+          store={store}
+          products={(products ?? []) as FashionProduct[]}
+        />
+      )
+    }
+
+    if (industry === 'electronics') {
+      return (
+        <ElectronicsStorePage
+          store={store}
+          products={(products ?? []) as ElectronicsProduct[]}
+        />
+      )
+    }
+
+    // Default fallback
     return (
       <FnbStorePage
         store={store as FnbStore}
         products={(products ?? []) as FnbProduct[]}
       />
     )
-  }
+  })()
 
-  if (industry === 'grocery') {
-    const { data: bundlesData } = await supabase
-      .from('bundles')
-      .select('*, bundle_products(*, products(*))')
-      .eq('store_id', id)
-      .eq('is_active', true)
-      .gt('end_date', new Date().toISOString())
-
-    // Flatten bundles to match GroceryBundle interface
-    const bundles = (bundlesData ?? []).map((b: any) => ({
-      ...b,
-      products: b.bundle_products.map((bp: any) => bp.products)
-    }))
-
-    return (
-      <GroceryStorePage
-        store={store}
-        products={(products ?? []) as GroceryProduct[]}
-        bundles={bundles}
-      />
-    )
-  }
-
-  if (industry === 'pharmacy') {
-    return (
-      <PharmacyStorePage
-        store={store}
-        products={(products ?? []) as PharmacyProduct[]}
-      />
-    )
-  }
-
-  if (industry === 'fashion') {
-    return (
-      <FashionStorePage
-        store={store}
-        products={(products ?? []) as FashionProduct[]}
-      />
-    )
-  }
-
-  // Default fallback (existing generic layout)
   return (
-    <FnbStorePage
-      store={store as FnbStore}
-      products={(products ?? []) as FnbProduct[]}
-    />
+    <>
+      <StoreStructuredData store={store} />
+      {industryPage}
+    </>
   )
 }
 

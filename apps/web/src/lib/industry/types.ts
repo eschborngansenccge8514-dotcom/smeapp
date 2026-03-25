@@ -221,3 +221,52 @@ export interface FashionCollection {
   description?: string | null
 }
 
+
+export interface ElectronicsVariant {
+  id: string
+  label: string               // "256GB · Midnight Black"
+  options: Record<string, string> // { storage: "256GB", colour: "Midnight Black" }
+  price: number
+  stock_qty: number
+  sku?: string | null
+}
+
+export interface ElectronicsSpec {
+  group: string               // "Display", "Performance", "Camera"
+  key: string                 // "Screen Size"
+  value: string               // "6.7 inches"
+  highlight?: boolean         // Show in quick-spec strip
+}
+
+export interface ElectronicsProduct {
+  id: string
+  name: string
+  description: string | null
+  price: number                    // Base / lowest variant price
+  image_url: string | null
+  gallery_urls?: string[]
+  is_available: boolean
+  stock_qty: number
+  category: string | null          // "Smartphones", "Laptops", "Audio", etc.
+  subcategory?: string | null
+  brand?: string | null
+  model_number?: string | null
+  variants: ElectronicsVariant[]
+  variant_options?: Record<string, string[]>  // { storage: ["128GB","256GB"], colour: [...] }
+  specs: ElectronicsSpec[]
+  quick_specs?: string[]           // ["6.7\" OLED", "5000mAh", "50MP Camera"]
+  warranty_months?: number | null  // 12, 24
+  is_official_warranty?: boolean
+  is_new_arrival?: boolean
+  is_bestseller?: boolean
+  is_on_promotion?: boolean
+  promotion_price?: number | null
+  promotion_label?: string | null
+  is_refurbished?: boolean
+  refurbished_grade?: 'A' | 'B' | 'C' | null
+  rating?: number | null
+  review_count?: number | null
+  in_box_items?: string[]          // ["Phone", "USB-C Cable", "Quick Charger"]
+  low_stock_threshold?: number
+  max_order_qty?: number | null
+}

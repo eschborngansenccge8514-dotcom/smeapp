@@ -76,6 +76,15 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
     sizes: product?.sizes ?? [],
     colours: product?.colours ?? [],
     gallery_urls: product?.gallery_urls ?? [],
+    // Electronics terms
+    model_number: product?.model_number ?? '',
+    warranty_months: product?.warranty_months?.toString() ?? '',
+    is_official_warranty: product?.is_official_warranty ?? false,
+    is_refurbished: product?.is_refurbished ?? false,
+    refurbished_grade: product?.refurbished_grade ?? '',
+    in_box_items: product?.in_box_items?.join(', ') ?? '',
+    quick_specs: product?.quick_specs?.join(', ') ?? '',
+    electronics_specs: product?.specs ?? [],
   })
 
   const [imageUrls, setImageUrls] = useState<string[]>(product?.image_urls ?? [])
@@ -181,6 +190,15 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
         sizes: form.sizes,
         colours: form.colours,
         gallery_urls: imageUrls.length > 1 ? imageUrls.slice(1) : [],
+        // Electronics
+        model_number: form.model_number.trim() || null,
+        warranty_months: form.warranty_months ? parseInt(form.warranty_months) : null,
+        is_official_warranty: form.is_official_warranty,
+        is_refurbished: form.is_refurbished,
+        refurbished_grade: form.refurbished_grade || null,
+        in_box_items: form.in_box_items ? form.in_box_items.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
+        quick_specs: form.quick_specs ? form.quick_specs.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
+        specs: form.electronics_specs,
         variants: form.colours.flatMap((c: any) => 
           form.sizes.map((s: string) => ({
             id: `${c.name}-${s}`.toLowerCase(),
@@ -708,6 +726,152 @@ export function ProductForm({ storeId, storeCategory, categories, product }: Pro
         </div>
       )}
 
+      {/* Electronics specific fields */}
+      {(storeCategory?.includes('Electronics') || storeCategory?.includes('Gadgets') || storeCategory?.includes('Computer')) && (
+        <div className="border-t border-gray-100 pt-5 space-y-4">
+          <p className="text-sm font-bold text-gray-700 flex items-center gap-2">
+            💻 Electronics & Gadgets Details
+          </p>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Brand</label>
+              <input value={form.brand} onChange={(e) => update('brand', e.target.value)}
+                placeholder="e.g. Apple, Samsung" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Model Number</label>
+              <input value={form.model_number} onChange={(e) => update('model_number', e.target.value)}
+                placeholder="e.g. SM-S928B" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Warranty (Months)</label>
+              <input type="number" min="0" value={form.warranty_months} onChange={(e) => update('warranty_months', e.target.value)}
+                placeholder="0" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+            </div>
+            <div className="flex items-center gap-3 pt-6">
+              <button type="button" onClick={() => update('is_official_warranty', !form.is_official_warranty)}
+                className={`w-10 h-5 rounded-full relative transition-colors ${form.is_official_warranty ? 'bg-indigo-600' : 'bg-gray-200'}`}>
+                <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${form.is_official_warranty ? 'translate-x-5' : ''}`} />
+              </button>
+              <span className="text-sm font-medium text-gray-700">Official Warranty</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Quick Specs (comma separated)</label>
+              <input value={form.quick_specs} onChange={(e) => update('quick_specs', e.target.value)}
+                placeholder={`e.g. 6.7" OLED, 5000mAh, 50MP Camera`} className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">In Box Items (comma separated)</label>
+              <input value={form.in_box_items} onChange={(e) => update('in_box_items', e.target.value)}
+                placeholder="e.g. Phone, USB-C Cable, Manual" className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+            </div>
+          </div>
+
+          <div className="bg-yellow-50 rounded-xl p-4 space-y-3">
+             <div className="flex items-center gap-3">
+               <button type="button" onClick={() => update('is_refurbished', !form.is_refurbished)}
+                 className={`w-10 h-5 rounded-full relative transition-colors ${form.is_refurbished ? 'bg-yellow-500' : 'bg-gray-200'}`}>
+                 <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${form.is_refurbished ? 'translate-x-5' : ''}`} />
+               </button>
+               <span className="text-sm font-bold text-yellow-800">Refurbished / Used?</span>
+             </div>
+             {form.is_refurbished && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-yellow-800 mb-1 uppercase">Condition Grade</label>
+                    <select value={form.refurbished_grade} onChange={(e) => update('refurbished_grade', e.target.value)}
+                      className="w-full border border-yellow-200 rounded-lg px-3 py-2 text-sm focus:outline-none">
+                      <option value="">None</option>
+                      <option value="A">Grade A — Like New</option>
+                      <option value="B">Grade B — Good</option>
+                      <option value="C">Grade C — Fair</option>
+                    </select>
+                  </div>
+                </div>
+             )}
+          </div>
+
+          <div className="bg-orange-50 rounded-xl p-4 space-y-3">
+             <div className="flex items-center gap-3">
+               <button type="button" onClick={() => update('is_on_promotion', !form.is_on_promotion)}
+                 className={`w-10 h-5 rounded-full relative transition-colors ${form.is_on_promotion ? 'bg-orange-500' : 'bg-gray-200'}`}>
+                 <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${form.is_on_promotion ? 'translate-x-5' : ''}`} />
+               </button>
+               <span className="text-sm font-bold text-orange-700">On Promotion?</span>
+             </div>
+             {form.is_on_promotion && (
+               <div className="grid grid-cols-2 gap-4">
+                 <div>
+                   <label className="block text-xs font-bold text-orange-700 mb-1 uppercase">Promo Price (RM)</label>
+                   <input type="number" step="0.01" value={form.promotion_price} onChange={(e) => update('promotion_price', e.target.value)}
+                     className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm focus:outline-none" />
+                 </div>
+                 <div>
+                   <label className="block text-xs font-bold text-orange-700 mb-1 uppercase">Promo Label</label>
+                   <input value={form.promotion_label} onChange={(e) => update('promotion_label', e.target.value)}
+                     placeholder="e.g. 20% OFF, Year End Sale" className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm focus:outline-none" />
+                 </div>
+               </div>
+             )}
+          </div>
+
+          <div className="flex flex-wrap gap-2 pt-2">
+            {[
+              { key: 'is_new_arrival', label: '✨ New Arrival', active: form.is_new_arrival },
+              { key: 'is_bestseller',  label: '🏆 Bestseller',  active: form.is_bestseller },
+              { key: 'is_popular',     label: '🔥 Popular',     active: form.is_popular },
+            ].map((tag) => (
+              <button key={tag.key} type="button" onClick={() => update(tag.key, !tag.active)}
+                className={`px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
+                  tag.active ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-200'
+                }`}>
+                {tag.label}
+              </button>
+            ))}
+          </div>
+
+          <div>
+             <label className="text-sm font-medium text-gray-700 block mb-2">Detailed Specifications</label>
+             <div className="space-y-2">
+                 {form.electronics_specs.map((spec: any, i: number) => (
+                    <div key={i} className="flex gap-2">
+                      <input value={spec.group} onChange={(e) => {
+                         const s = [...form.electronics_specs]
+                         s[i].group = e.target.value
+                         update('electronics_specs', s)
+                      }} placeholder="Group (e.g. Display)" className="w-1/4 border border-gray-200 rounded-xl px-3 py-2 text-sm" />
+                       <input value={spec.key} onChange={(e) => {
+                         const s = [...form.electronics_specs]
+                         s[i].key = e.target.value
+                         update('electronics_specs', s)
+                      }} placeholder="Spec Key" className="w-1/4 border border-gray-200 rounded-xl px-3 py-2 text-sm" />
+                      <input value={spec.value} onChange={(e) => {
+                         const s = [...form.electronics_specs]
+                         s[i].value = e.target.value
+                         update('electronics_specs', s)
+                      }} placeholder="Value" className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm" />
+                      <button onClick={() => {
+                           const s = form.electronics_specs.filter((_: any, idx: number) => idx !== i)
+                           update('electronics_specs', s)
+                        }} className="p-2 text-red-400 hover:text-red-600">
+                        <X size={16} />
+                      </button>
+                    </div>
+                 ))}
+                 <button type="button" onClick={() => {
+                    update('electronics_specs', [...form.electronics_specs, { group: '', key: '', value: '' }])
+                 }} className="px-3 py-2 rounded-xl text-xs font-bold border border-dashed border-gray-300 text-gray-400 hover:border-indigo-300 hover:text-indigo-500">+ Add Spec Item</button>
+             </div>
+          </div>
+        </div>
+      )}
 
       {/* F&B specific fields — shown only for F&B stores */}
       {storeCategory?.includes('Food') && (
