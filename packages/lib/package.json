@@ -4,6 +4,7 @@
   "private": true,
   "exports": {
     ".": "./src/index.ts",
+    "./client": "./src/client.ts",
     "./types": "./src/types.ts",
     "./mobile": "./src/mobile.ts",
     "./web": "./src/web.ts",
