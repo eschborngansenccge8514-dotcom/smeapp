@@ -11,8 +11,20 @@ const CATEGORY_TO_INDUSTRY: Record<string, IndustrySlug> = {
 
 export function resolveIndustry(category: string | null): IndustrySlug {
   if (!category) return 'default'
-  return CATEGORY_TO_INDUSTRY[category] ?? 'default'
+  if (CATEGORY_TO_INDUSTRY[category]) return CATEGORY_TO_INDUSTRY[category]
+  
+  const lower = category.toLowerCase()
+  if (lower.includes('food') || lower.includes('restaurant')) return 'fnb'
+  if (lower.includes('grocery') || lower.includes('market')) return 'grocery'
+  if (lower.includes('pharmacy') || lower.includes('health') || lower.includes('clinic')) return 'pharmacy'
+  if (lower.includes('fashion') || lower.includes('apparel') || lower.includes('clothing')) return 'fashion'
+  if (lower.includes('electronic')) return 'electronics'
+  if (lower.includes('beauty') || lower.includes('salon') || lower.includes('spa')) return 'beauty'
+  if (lower.includes('hardware') || lower.includes('diy')) return 'hardware' as any
+  
+  return 'default'
 }
+
 
 export const INDUSTRY_THEMES: Record<IndustrySlug, IndustryTheme> = {
   fnb: {

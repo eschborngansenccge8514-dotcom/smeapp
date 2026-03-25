@@ -164,3 +164,60 @@ export interface PharmacyCategory {
   icon: string
   subcategories: string[]
 }
+
+export type FashionSize = 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL' | 'XXXL'
+  | '28' | '30' | '32' | '34' | '36' | '38' | '40'   // waist
+  | '36' | '37' | '38' | '39' | '40' | '41' | '42'   // shoes EU
+  | 'One Size' | 'Free Size'
+
+export interface FashionColour {
+  name: string            // "Midnight Black", "Cream White"
+  hex: string             // "#1A1A1A"
+  image_url?: string | null  // colour-specific product photo
+  stock_by_size?: Record<string, number>
+}
+
+export interface FashionVariant {
+  id: string
+  size: string
+  colour: string
+  sku?: string | null
+  stock_qty: number
+  price_add?: number     // 0 = same price, >0 = upsize charge
+}
+
+export interface FashionProduct {
+  id: string
+  name: string
+  description: string | null
+  price: number
+  sale_price?: number | null
+  image_url: string | null
+  gallery_urls?: string[]          // additional product photos
+  is_available: boolean
+  stock_qty: number
+  category: string | null          // "Tops", "Bottoms", "Dresses", etc.
+  subcategory?: string | null      // "T-Shirts", "Jeans", etc.
+  brand?: string | null
+  colours: FashionColour[]
+  sizes: string[]
+  variants: FashionVariant[]
+  material?: string | null         // "100% Cotton", "Polyester blend"
+  care_instructions?: string[] | null
+  fit_type?: string | null         // "Slim Fit", "Regular", "Oversized"
+  is_new_arrival?: boolean
+  is_bestseller?: boolean
+  is_on_sale?: boolean
+  collection?: string | null       // "Summer 2026", "Raya Collection"
+  gender_target?: 'men' | 'women' | 'unisex' | 'kids' | null
+  tags?: string[]                  // ["casual", "formal", "streetwear"]
+  model_height?: string | null     // "Model is 170cm, wearing size S"
+  country_of_origin?: string | null
+}
+
+export interface FashionCollection {
+  name: string
+  cover_url?: string | null
+  description?: string | null
+}
+

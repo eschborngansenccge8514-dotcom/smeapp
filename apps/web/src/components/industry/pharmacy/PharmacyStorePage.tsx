@@ -92,9 +92,17 @@ export function PharmacyStorePage({ store, products }: Props) {
       return [{ label: searchQuery ? `Results for "${searchQuery}"` : activeCategory, items: filtered }]
     }
     const cats = [...new Set(products.map((p) => p.category).filter(Boolean))] as string[]
-    return cats
+    const result = cats
       .map((cat) => ({ label: cat, items: filtered.filter((p) => p.category === cat) }))
       .filter((s) => s.items.length > 0)
+      
+    // Add uncategorized products to "Other"
+    const uncategorized = filtered.filter((p) => !p.category)
+    if (uncategorized.length > 0) {
+      result.push({ label: 'Other', items: uncategorized })
+    }
+    
+    return result
   }, [filtered, activeCategory, searchQuery, products])
 
   function getCartQty(productId: string) {

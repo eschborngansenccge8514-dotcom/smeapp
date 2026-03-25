@@ -4,7 +4,8 @@ import { resolveIndustry } from '@/lib/industry'
 import { FnbStorePage } from '@/components/industry/fnb/FnbStorePage'
 import { GroceryStorePage } from '@/components/industry/grocery/GroceryStorePage'
 import { PharmacyStorePage } from '@/components/industry/pharmacy/PharmacyStorePage'
-import type { FnbStore, FnbProduct, GroceryProduct, PharmacyProduct } from '@/lib/industry/types'
+import { FashionStorePage } from '@/components/industry/fashion/FashionStorePage'
+import type { FnbStore, FnbProduct, GroceryProduct, PharmacyProduct, FashionProduct } from '@/lib/industry/types'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -68,6 +69,15 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
     )
   }
 
+  if (industry === 'fashion') {
+    return (
+      <FashionStorePage
+        store={store}
+        products={(products ?? []) as FashionProduct[]}
+      />
+    )
+  }
+
   // Default fallback (existing generic layout)
   return (
     <FnbStorePage
@@ -76,3 +86,4 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
     />
   )
 }
+

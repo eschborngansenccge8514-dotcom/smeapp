@@ -5,7 +5,8 @@ import { Upload, X, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface ImageUploadProps {
-  bucket: 'product-images' | 'store-logos' | 'avatars'
+  bucket: 'product-images' | 'store-logos' | 'avatars' | 'hero-slides'
+
   label?: string
   currentUrl?: string | null
   onUpload: (url: string) => void
