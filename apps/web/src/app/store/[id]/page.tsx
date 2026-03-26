@@ -21,7 +21,11 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
   const supabase = await createClient()
 
   const [{ data: store }, { data: products }] = await Promise.all([
-    supabase.from('stores').select('*').eq('id', id).eq('is_active', true).single(),
+    supabase.from('stores')
+      .select('*, loyalty_programs(*)')
+      .eq('id', id)
+      .eq('is_active', true)
+      .single(),
     supabase.from('products').select('*').eq('store_id', id).order('category').order('name'),
   ])
 

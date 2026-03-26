@@ -10,11 +10,20 @@ interface Props {
 
 export default async function CheckoutCompletePage({ searchParams }: Props) {
   const params = await searchParams
-  const { order_id, billplz_paid } = params as any
+  const order_id = params['order_id']
 
-  // Verify X-Signature from redirect params
-  const isValid = verifyXSignature(params)
-  const isPaid  = isValid && billplz_paid === 'true'
+  // Billplz appends its own params to our redirect URL (bracket notation: billplz[id], billplz[paid], …)
+  // We must ONLY pass Billplz-generated params to verifyXSignature — our custom `order_id` must be excluded,
+  // otherwise the HMAC will never match (Billplz didn't include order_id when it computed the signature).
+  const billplzParams = Object.fromEntries(
+    Object.entries(params).filter(([k]) => k.startsWith('billplz') || k === 'x_signature')
+  )
+
+  // Billplz redirect uses bracket notation: billplz[paid] = "true"
+  const billplzPaid = billplzParams['billplz[paid]'] ?? billplzParams['billplz_paid']
+  const hasSignature = 'x_signature' in billplzParams
+  const isValid = hasSignature && verifyXSignature(billplzParams)
+  const isPaid  = isValid && billplzPaid === 'true'
 
   if (!order_id) redirect('/')
 
@@ -27,7 +36,12 @@ export default async function CheckoutCompletePage({ searchParams }: Props) {
 
   if (!order) redirect('/')
 
-  if (isPaid) {
+  // Also treat as paid if the webhook already confirmed the order in DB
+  // (webhook often fires before the browser redirect completes)
+  const isConfirmedInDb = order.status === 'confirmed' || order.status === 'delivered'
+  const isManualPayment = order.payment_method === 'manual'
+  if (isPaid || isConfirmedInDb || isManualPayment) {
+
     return (
       <div className="max-w-lg mx-auto py-12 px-4 text-center">
         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5">
@@ -35,7 +49,7 @@ export default async function CheckoutCompletePage({ searchParams }: Props) {
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Order Placed! 🎉</h1>
         <p className="text-gray-500 mb-1">
-          Your payment was successful
+          {isManualPayment ? 'Please complete your manual payment' : 'Your payment was successful'}
         </p>
         <p className="text-sm text-gray-400 mb-6">Order #{order_id.slice(0, 8).toUpperCase()}</p>
 

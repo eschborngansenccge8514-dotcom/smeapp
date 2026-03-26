@@ -1,25 +1,57 @@
 'use client'
 import { useState } from 'react'
-import { Ticket, FileText, CheckCircle2, XCircle, Loader2 } from 'lucide-react'
+import { Ticket, FileText, CheckCircle2, XCircle, Loader2, Coins, Minus, Plus } from 'lucide-react'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
+import { useEffect } from 'react'
 import toast from 'react-hot-toast'
 
 interface PromoStepProps {
   storeId: string
+  userId: string
   subtotal: number
   promoCode: string
   discountAmount: number
+  loyaltyPoints: number
+  loyaltyDiscount: number
   notes: string
   onPromo: (code: string, amount: number, id: string | null) => void
+  onLoyalty: (points: number, discount: number) => void
   onNotes: (notes: string) => void
   onNext: () => void
   onBack: () => void
 }
 
-export function PromoStep({ storeId, subtotal, promoCode, discountAmount, notes, onPromo, onNotes, onNext, onBack }: PromoStepProps) {
+export function PromoStep({ 
+  storeId, userId, subtotal, promoCode, discountAmount, 
+  loyaltyPoints, loyaltyDiscount, notes, 
+  onPromo, onLoyalty, onNotes, onNext, onBack 
+}: PromoStepProps) {
   const [code, setCode] = useState(promoCode)
   const [checking, setChecking] = useState(false)
+  const [balance, setBalance] = useState<{ current_points: number } | null>(null)
+  const [program, setProgram] = useState<any>(null)
   const supabase = createSupabaseBrowser()
+
+  useEffect(() => {
+    async function loadLoyalty() {
+      const [{ data: bal }, { data: prog }] = await Promise.all([
+        supabase.from('loyalty_balances').select('current_points').eq('user_id', userId).eq('store_id', storeId).single(),
+        supabase.from('loyalty_programs').select('*').eq('store_id', storeId).eq('is_enabled', true).single()
+      ])
+      setBalance(bal)
+      setProgram(prog)
+    }
+    loadLoyalty()
+  }, [storeId, userId])
+
+  const maxPointsByPct = program ? Math.floor((program.max_redeem_pct / 100) * subtotal * program.points_per_myr_redeem) : 0
+  const maxRedeemable = Math.min(balance?.current_points ?? 0, maxPointsByPct)
+
+  function handleLoyaltyChange(pts: number) {
+    const finalPts = Math.max(0, Math.min(pts, maxRedeemable))
+    const discount = program ? finalPts / program.points_per_myr_redeem : 0
+    onLoyalty(finalPts, discount)
+  }
 
   async function applyPromo() {
     if (!code.trim()) return
@@ -114,6 +146,64 @@ export function PromoStep({ storeId, subtotal, promoCode, discountAmount, notes,
           </div>
         )}
       </div>
+
+      {/* Loyalty Points Section */}
+      {program && balance && balance.current_points > 0 && (
+        <div className="space-y-4 border-t border-gray-100 pt-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2 uppercase tracking-wider">
+              <Coins size={16} className="text-amber-500" /> Pay with Points
+            </h3>
+            <span className="text-[10px] bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-bold">
+              Balance: {balance.current_points} pts
+            </span>
+          </div>
+          
+          <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-gray-500 mb-2">Points to redeem</p>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => handleLoyaltyChange(loyaltyPoints - 10)}
+                    className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 active:scale-95 transition-all shadow-sm"
+                  >
+                    <Minus size={18} />
+                  </button>
+                  <div className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-2 font-bold text-center text-gray-900 shadow-sm relative group">
+                     {loyaltyPoints}
+                     {loyaltyPoints >= maxRedeemable && maxRedeemable > 0 && (
+                        <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900 text-white text-[10px] px-2 py-1 rounded-md whitespace-nowrap pointer-events-none shadow-lg">Max redeemable reached</div>
+                     )}
+                  </div>
+                  <button 
+                    onClick={() => handleLoyaltyChange(loyaltyPoints + 10)}
+                    className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 active:scale-95 transition-all shadow-sm"
+                  >
+                    <Plus size={18} />
+                  </button>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xs font-semibold text-gray-500 mb-2">Discount</p>
+                <p className="text-lg font-bold text-indigo-600">-RM {loyaltyDiscount.toFixed(2)}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 px-1">
+              <input 
+                type="range" 
+                min="0" 
+                max={maxRedeemable} 
+                step="1"
+                value={loyaltyPoints} 
+                onChange={(e) => handleLoyaltyChange(parseInt(e.target.value))}
+                className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" 
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Notes section */}
       <div className="space-y-3">

@@ -9,10 +9,11 @@ interface OrderSummaryProps {
   deliveryFee: number
   serviceFee: number
   discount: number
+  loyaltyDiscount?: number
   total: number
 }
 
-export function OrderSummary({ items, storeName, subtotal, deliveryFee, serviceFee, discount, total }: OrderSummaryProps) {
+export function OrderSummary({ items, storeName, subtotal, deliveryFee, serviceFee, discount, loyaltyDiscount = 0, total }: OrderSummaryProps) {
   return (
     <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm sticky top-20">
       <h3 className="font-bold text-gray-900 mb-4 text-lg">Order Summary</h3>
@@ -57,8 +58,14 @@ export function OrderSummary({ items, storeName, subtotal, deliveryFee, serviceF
         </div>
         {discount > 0 && (
           <div className="flex justify-between text-sm text-green-600 font-medium">
-            <span>Discount</span>
+            <span>Promotion</span>
             <span>−{formatPrice(discount)}</span>
+          </div>
+        )}
+        {loyaltyDiscount > 0 && (
+          <div className="flex justify-between text-sm text-indigo-600 font-medium">
+            <span>Loyalty Points</span>
+            <span>−{formatPrice(loyaltyDiscount)}</span>
           </div>
         )}
         <div className="border-t border-gray-100 pt-3 flex justify-between">

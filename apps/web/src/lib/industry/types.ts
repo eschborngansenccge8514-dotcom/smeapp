@@ -77,6 +77,7 @@ export interface FnbStore {
   review_count?: number
   avg_prep_time_min?: number
   min_order_amount?: number
+  loyalty_programs?: any[] | null
 }
 
 export interface OperatingHours {

@@ -46,6 +46,12 @@ export function OrderCard({
         <p className="text-xs text-blue-600 mb-2">📦 {order.courier_name ?? 'EasyParcel'}</p>
       )}
 
+      {order.payment_method === 'manual' && (
+        <p className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full inline-block mb-2 uppercase tracking-tight border border-orange-100 italic">
+          💰 Manual Payment
+        </p>
+      )}
+
       <div className="flex gap-2">
         <button
           onClick={onAdvance}

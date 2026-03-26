@@ -16,12 +16,15 @@ export type CheckoutState = {
   discountAmount: number
   promotionId: string | null
   notes: string
+  loyaltyPoints: number
+  loyaltyDiscount: number
 }
 
 const STEPS = ['Address', 'Delivery', 'Promo & Notes', 'Payment']
 
 export function CheckoutFlow({ addresses, profile, userId }: any) {
   const { items, storeId, storeName, getTotal } = useCartStore()
+  const [store, setStore] = useState<any>(null)
   const [step, setStep] = useState(0)
   const [state, setState] = useState<CheckoutState>({
     address: addresses.find((a: any) => a.is_default) ?? addresses[0] ?? null,
@@ -32,13 +35,26 @@ export function CheckoutFlow({ addresses, profile, userId }: any) {
     discountAmount: 0,
     promotionId: null,
     notes: '',
+    loyaltyPoints: 0,
+    loyaltyDiscount: 0,
   })
 
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
-  }, [])
+    if (storeId) {
+      fetchStoreSettings()
+    }
+  }, [storeId])
+
+  async function fetchStoreSettings() {
+    const res = await fetch(`/api/store/${storeId}`)
+    const data = await res.json()
+    if (data.store) {
+      setStore(data.store)
+    }
+  }
 
   function update(key: keyof CheckoutState, value: any) {
     setState((s) => ({ ...s, [key]: value }))
@@ -46,7 +62,7 @@ export function CheckoutFlow({ addresses, profile, userId }: any) {
 
   const subtotal     = getTotal()
   const serviceFee   = Math.round(subtotal * 0.02 * 100) / 100
-  const total        = subtotal + state.deliveryFee + serviceFee - state.discountAmount
+  const total        = subtotal + state.deliveryFee + serviceFee - state.discountAmount - state.loyaltyDiscount
 
   if (!mounted) return null
 
@@ -102,13 +118,18 @@ export function CheckoutFlow({ addresses, profile, userId }: any) {
         )}
         {step === 2 && (
           <PromoStep
-            storeId={storeId!} subtotal={subtotal}
+            storeId={storeId!} userId={userId} subtotal={subtotal}
             promoCode={state.promoCode} discountAmount={state.discountAmount}
+            loyaltyPoints={state.loyaltyPoints} loyaltyDiscount={state.loyaltyDiscount}
             notes={state.notes}
             onPromo={(code: any, amount: any, id: any) => {
               update('promoCode', code)
               update('discountAmount', amount)
               update('promotionId', id)
+            }}
+            onLoyalty={(points: number, discount: number) => {
+              update('loyaltyPoints', points)
+              update('loyaltyDiscount', discount)
             }}
             onNotes={(n: any) => update('notes', n)}
             onNext={() => setStep(3)}
@@ -119,7 +140,7 @@ export function CheckoutFlow({ addresses, profile, userId }: any) {
           <PaymentStep
             userId={userId} storeId={storeId!} state={state}
             subtotal={subtotal} serviceFee={serviceFee} total={total}
-            items={items}
+            items={items} store={store}
             onBack={() => setStep(2)}
           />
         )}
@@ -131,6 +152,7 @@ export function CheckoutFlow({ addresses, profile, userId }: any) {
           items={items} storeName={storeName}
           subtotal={subtotal} deliveryFee={state.deliveryFee}
           serviceFee={serviceFee} discount={state.discountAmount}
+          loyaltyDiscount={state.loyaltyDiscount}
           total={total}
         />
       </div>

@@ -15,6 +15,8 @@ export function PaymentSettingsForm({ store }: { store: any }) {
     bank_account_holder_name: store?.bank_account_holder_name ?? '',
     accepts_razorpay: store?.accepts_razorpay ?? true,
     accepts_billplz: store?.accepts_billplz ?? true,
+    accepts_manual_payment: store?.accepts_manual_payment ?? false,
+    manual_payment_instructions: store?.manual_payment_instructions ?? '',
   })
   const [loading, setLoading] = useState(false)
 
@@ -32,6 +34,8 @@ export function PaymentSettingsForm({ store }: { store: any }) {
         bank_account_holder_name: form.bank_account_holder_name || null,
         accepts_razorpay: form.accepts_razorpay,
         accepts_billplz: form.accepts_billplz,
+        accepts_manual_payment: form.accepts_manual_payment,
+        manual_payment_instructions: form.manual_payment_instructions || null,
       })
       .eq('id', store.id)
       
@@ -133,6 +137,36 @@ export function PaymentSettingsForm({ store }: { store: any }) {
             onChange={(e) => update('accepts_billplz', e.target.checked)}
             className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500"
           />
+        </div>
+
+        <div className="flex flex-col gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center text-green-600 font-bold text-xs uppercase">MAN</div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Manual Payment</p>
+                <p className="text-xs text-gray-500">Accept Bank Transfer or Cash</p>
+              </div>
+            </div>
+            <input 
+              type="checkbox" 
+              checked={form.accepts_manual_payment} 
+              onChange={(e) => update('accepts_manual_payment', e.target.checked)}
+              className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500"
+            />
+          </div>
+          
+          {form.accepts_manual_payment && (
+            <div className="pt-3 border-t border-gray-100">
+              <label className="text-xs font-medium text-gray-700 block mb-1">Payment Instructions for Customers</label>
+              <textarea 
+                value={form.manual_payment_instructions} 
+                onChange={(e) => update('manual_payment_instructions', e.target.value)} 
+                placeholder="e.g. Please transfer to Maybank 123456789 (Acme Corp). Send receipt to Whatsapp 012-3456789."
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-shadow min-h-[80px]"
+              />
+            </div>
+          )}
         </div>
       </div>
 

@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     const {
       storeId, items, address, deliveryType, deliveryFee,
       deliveryQuote, promotionId, discountAmount, notes,
-      subtotal, serviceFee, total
+      subtotal, serviceFee, total, loyaltyPoints, paymentMethod
     } = await req.json()
 
     // Validate stock for each item
@@ -61,12 +61,39 @@ export async function POST(req: NextRequest) {
         delivery_lng:     address.lng,
         address_id:       address.id,
         promotion_id:     promotionId,
+        payment_method:   paymentMethod || 'billplz',
         notes:            notes || null,
       })
       .select()
       .single()
 
     if (orderError) throw orderError
+
+    // 1.1 Handle loyalty redemption
+    let appliedLoyaltyPoints = 0
+    let loyaltyDiscountValue = 0
+    if (loyaltyPoints > 0) {
+      const { data: redemption, error: redeemError } = await admin.rpc('redeem_loyalty_points', {
+        p_store_id: storeId,
+        p_user_id: user.id,
+        p_order_id: order.id,
+        p_subtotal: subtotal,
+        p_requested_points: loyaltyPoints
+      })
+
+      if (!redeemError && redemption?.length > 0) {
+        appliedLoyaltyPoints = redemption[0].applied_points
+        loyaltyDiscountValue = redemption[0].discount_myr
+        
+        // Update order with actual loyalty results
+        await admin.from('orders').update({
+          loyalty_points_used: appliedLoyaltyPoints,
+          loyalty_discount:    loyaltyDiscountValue
+        }).eq('id', order.id)
+      } else if (redeemError) {
+        console.error('Loyalty redemption error:', redeemError)
+      }
+    }
 
     // 2. Insert order items
     await admin.from('order_items').insert(
@@ -99,7 +126,19 @@ export async function POST(req: NextRequest) {
         .eq('id', promotionId)
     }
 
-    // 5. Create Billplz bill
+    // 5. Handle Payment (Billplz vs Manual)
+    if (paymentMethod === 'manual') {
+      await admin.from('payments').insert({
+        order_id:    order.id,
+        customer_id: user.id,
+        amount:      total,
+        gateway:     'manual',
+        status:      'pending',
+      })
+      return NextResponse.json({ orderId: order.id })
+    }
+
+    // Create Billplz bill
     const amountCents = Math.round(total * 100)
     const bill = await createBill({
       orderId:       order.id,
@@ -119,6 +158,7 @@ export async function POST(req: NextRequest) {
       amount:          total,
       billplz_bill_id: bill.id,
       billplz_url:     bill.url,
+      gateway:         'billplz',
       status:          'pending',
     })
 

@@ -58,6 +58,11 @@ export function FnbHero({ store, theme }: { store: FnbStore; theme: any }) {
                     🕐 {store.avg_prep_time_min}–{store.avg_prep_time_min + 10} min
                   </span>
                 )}
+                {store.loyalty_programs?.[0]?.is_enabled && (
+                  <span className="bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                    🏆 {store.loyalty_programs[0].base_points_per_myr}X REWARDS
+                  </span>
+                )}
               </div>
             </div>
           </div>

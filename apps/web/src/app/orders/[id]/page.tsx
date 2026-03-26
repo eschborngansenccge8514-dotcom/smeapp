@@ -20,7 +20,7 @@ export default async function OrderPage({ params }: Props) {
     .from('orders')
     .select(`
       *,
-      stores(name, logo_url, address, phone, lat, lng, postcode, state),
+      stores(name, logo_url, address, phone, lat, lng, postcode, state, manual_payment_instructions),
       order_items(*, products(name, image_urls))
     `)
     .eq('id', id)

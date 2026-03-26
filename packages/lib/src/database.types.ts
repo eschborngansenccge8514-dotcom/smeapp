@@ -73,6 +73,7 @@ export type Database = {
           total_amount: number
           tracking_number: string | null
           updated_at: string
+          payment_method: string | null
         }
         Insert: {
           courier_name?: string | null
@@ -93,6 +94,7 @@ export type Database = {
           total_amount: number
           tracking_number?: string | null
           updated_at?: string
+          payment_method?: string | null
         }
         Update: {
           courier_name?: string | null
@@ -113,6 +115,7 @@ export type Database = {
           total_amount?: number
           tracking_number?: string | null
           updated_at?: string
+          payment_method?: string | null
         }
         Relationships: [
           {
@@ -295,6 +298,8 @@ export type Database = {
           bank_account_holder_name: string | null
           accepts_razorpay: boolean | null
           accepts_billplz: boolean | null
+          accepts_manual_payment: boolean | null
+          manual_payment_instructions: string | null
         }
         Insert: {
           address: string
@@ -317,6 +322,8 @@ export type Database = {
           bank_account_holder_name?: string | null
           accepts_razorpay?: boolean | null
           accepts_billplz?: boolean | null
+          accepts_manual_payment?: boolean | null
+          manual_payment_instructions?: string | null
         }
         Update: {
           address?: string
@@ -339,6 +346,8 @@ export type Database = {
           bank_account_holder_name?: string | null
           accepts_razorpay?: boolean | null
           accepts_billplz?: boolean | null
+          accepts_manual_payment?: boolean | null
+          manual_payment_instructions?: string | null
         }
         Relationships: [
           {

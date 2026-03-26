@@ -64,9 +64,20 @@ export function OrderDetails({ order }: { order: any }) {
           </div>
         )}
         <div className="border-t border-gray-100 pt-3 flex justify-between">
-          <span className="font-bold text-gray-900">Total Paid</span>
+          <span className="font-bold text-gray-900">Total {order.payment_method === 'manual' ? 'Amount' : 'Paid'}</span>
           <span className="font-extrabold text-indigo-600 text-lg">{formatPrice(order.total_amount)}</span>
         </div>
+        
+        {order.payment_method === 'manual' && order.stores?.manual_payment_instructions && (
+          <div className="mt-4 p-4 bg-orange-50 border border-orange-100 rounded-2xl space-y-2">
+            <h4 className="text-xs font-bold text-orange-800 uppercase tracking-wider flex items-center gap-1.5">
+              <span>💰</span> Manual Payment Instructions
+            </h4>
+            <p className="text-sm text-orange-900 leading-relaxed whitespace-pre-wrap italic">
+              {order.stores.manual_payment_instructions}
+            </p>
+          </div>
+        )}
       </div>
 
       {order.notes && (

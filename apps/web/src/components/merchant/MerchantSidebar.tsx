@@ -5,7 +5,7 @@ import {
   LayoutDashboard, ShoppingBag, Package,
   BarChart2, Users, Tag, Star, Wallet,
   Store, Palette, ChevronRight, Truck, Landmark,
-  Mail, Bell, Globe
+  Mail, Bell, Globe, Trophy
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { label: 'Customers',      href: '/merchant/customers',      icon: Users },
   { label: 'Email Marketing', href: '/merchant/email-marketing', icon: Mail },
   { label: 'Promotions',     href: '/merchant/promotions',     icon: Tag },
+  { label: 'Loyalty Program', href: '/merchant/settings/loyalty', icon: Trophy },
   { label: 'Reviews',        href: '/merchant/reviews',        icon: Star },
   { label: 'Notifications',  href: '/merchant/notifications',  icon: Bell },
   { label: 'Payouts',          href: '/merchant/payouts',           icon: Wallet },

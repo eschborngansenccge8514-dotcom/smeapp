@@ -2,7 +2,7 @@ import { createSupabaseServer } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
 import { StatusBadge } from '@/components/admin/ui/StatusBadge'
-import { Package, User, MapPin, Truck, Calendar } from 'lucide-react'
+import { Package, User, MapPin, Truck, Calendar, CreditCard } from 'lucide-react'
 
 export default async function MerchantOrderDetailPage({
   params,
@@ -114,6 +114,22 @@ export default async function MerchantOrderDetailPage({
                 <p className="mt-1 text-xs font-mono text-indigo-600">Tracking: {order.tracking_number}</p>
               )}
             </div>
+          </div>
+          {/* Payment */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center gap-2 mb-4 font-bold text-gray-900">
+              <CreditCard size={18} />
+              <h3>Payment</h3>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-gray-700 uppercase tracking-tight">
+                {order.payment_method === 'manual' ? '💰 Manual Payment' : '💳 Billplz'}
+              </p>
+              <StatusBadge status={order.payment_status || 'pending'} />
+            </div>
+            {order.payment_method === 'manual' && (
+              <p className="mt-2 text-xs text-gray-400 italic">Verify payment manually before processing</p>
+            )}
           </div>
         </div>
       </div>

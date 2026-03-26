@@ -3,7 +3,8 @@ import { createSupabaseAdmin } from '@/lib/supabase/admin'
 import { getLalamoveQuote, getEasyParcelRates, geocodeAddress } from '@repo/lib'
 
 export async function POST(req: NextRequest) {
-  const { storeId, address } = await req.json()
+  // `provider` is optional — if omitted, both are fetched (legacy behaviour)
+  const { storeId, address, provider } = await req.json()
   const admin = createSupabaseAdmin()
 
   const { data: store } = await admin
@@ -61,8 +62,13 @@ export async function POST(req: NextRequest) {
     ? haversineKm(storeWithCoords.lat, storeWithCoords.lng, addrWithCoords.lat, addrWithCoords.lng)
     : null
   const maxRadius = storeWithCoords.delivery_max_radius_km ?? 30
-  const isLalamoveAllowed = (storeWithCoords.delivery_enabled_lalamove ?? true) && (distanceKm === null || distanceKm <= maxRadius)
-  const isEasyParcelAllowed = storeWithCoords.delivery_enabled_easyparcel ?? true
+  const isLalamoveAllowed =
+    (!provider || provider === 'lalamove') &&
+    (storeWithCoords.delivery_enabled_lalamove ?? true) &&
+    (distanceKm === null || distanceKm <= maxRadius)
+  const isEasyParcelAllowed =
+    (!provider || provider === 'easyparcel') &&
+    (storeWithCoords.delivery_enabled_easyparcel ?? true)
 
   // ── Fetch quotes concurrently ──────────────────────────────────────────────
   const [lalamoveResult, easyparcelResult] = await Promise.allSettled([

@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
 
 const PAYMENT_METHODS = [
-  { code: null,       label: 'Choose at Billplz',      icon: '💳', desc: 'FPX, e-wallet, credit card' },
+  { code: 'billplz',  label: 'Choose at Billplz',      icon: '💳', desc: 'FPX, e-wallet, credit card' },
   { code: 'MB2U0227', label: 'Maybank2u',               icon: '🏦', desc: 'FPX Online Banking' },
   { code: 'BCBB0235', label: 'CIMB Clicks',             icon: '🏦', desc: 'FPX Online Banking' },
   { code: 'HLB0224',  label: 'Hong Leong Connect',      icon: '🏦', desc: 'FPX Online Banking' },
@@ -16,10 +16,10 @@ const PAYMENT_METHODS = [
   { code: 'BOOST',    label: 'Boost',                   icon: '🚀', desc: 'eWallet' },
 ]
 
-export function PaymentStep({ userId, storeId, state, subtotal, serviceFee, total, items, onBack }: any) {
+export function PaymentStep({ userId, storeId, state, subtotal, serviceFee, total, items, onBack, store }: any) {
   const { clearCart } = useCartStore()
   const router = useRouter()
-  const [selectedMethod, setSelectedMethod] = useState<string | null>(null)
+  const [selectedMethod, setSelectedMethod] = useState<string | null>('billplz')
   const [loading, setLoading] = useState(false)
 
   async function placeOrder() {
@@ -41,6 +41,8 @@ export function PaymentStep({ userId, storeId, state, subtotal, serviceFee, tota
           subtotal,
           serviceFee,
           total,
+          loyaltyPoints: state.loyaltyPoints,
+          paymentMethod: selectedMethod,
         }),
       })
 
@@ -49,9 +51,15 @@ export function PaymentStep({ userId, storeId, state, subtotal, serviceFee, tota
 
       clearCart()
 
+      if (selectedMethod === 'manual') {
+        router.push(`/checkout/complete?order_id=${data.orderId}`)
+        return
+      }
+
       // Redirect to Billplz payment page
       // Append bank code for direct payment if selected
-      const billUrl = selectedMethod
+      const isDirectBank = selectedMethod && selectedMethod !== 'billplz' && selectedMethod !== 'manual'
+      const billUrl = isDirectBank
         ? `${data.billUrl}?auto_submit=true&bank_code=${selectedMethod}`
         : data.billUrl
 
@@ -70,7 +78,7 @@ export function PaymentStep({ userId, storeId, state, subtotal, serviceFee, tota
 
       {/* Payment method selector */}
       <div className="space-y-2">
-        {PAYMENT_METHODS.map((m) => (
+        {PAYMENT_METHODS.filter(m => (store?.accepts_billplz ?? true) || m.code === 'manual').map((m) => (
           <button key={m.code ?? 'default'}
             onClick={() => setSelectedMethod(m.code)}
             className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 text-left transition-colors
@@ -83,6 +91,27 @@ export function PaymentStep({ userId, storeId, state, subtotal, serviceFee, tota
             </div>
           </button>
         ))}
+
+        {store?.accepts_manual_payment && (
+          <button
+            onClick={() => setSelectedMethod('manual')}
+            className={`w-full flex flex-col gap-2 p-3.5 rounded-2xl border-2 text-left transition-colors
+              ${selectedMethod === 'manual' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300'}`}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">💰</span>
+              <div>
+                <p className="font-semibold text-sm text-gray-900">Manual Payment</p>
+                <p className="text-xs text-gray-400">Bank Transfer / Cash</p>
+              </div>
+            </div>
+            {selectedMethod === 'manual' && store.manual_payment_instructions && (
+              <div className="mt-2 p-3 bg-white border border-indigo-100 rounded-xl text-xs text-gray-600 leading-relaxed whitespace-pre-wrap italic">
+                {store.manual_payment_instructions}
+              </div>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Order Total Summary */}
@@ -100,6 +129,12 @@ export function PaymentStep({ userId, storeId, state, subtotal, serviceFee, tota
           <div className="flex justify-between text-green-600">
             <span>Promo ({state.promoCode})</span>
             <span>−{formatPrice(state.discountAmount)}</span>
+          </div>
+        )}
+        {state.loyaltyDiscount > 0 && (
+          <div className="flex justify-between text-indigo-600">
+            <span>Loyalty Points ({state.loyaltyPoints} pts)</span>
+            <span>−{formatPrice(state.loyaltyDiscount)}</span>
           </div>
         )}
         <div className="border-t border-gray-200 pt-2 flex justify-between font-bold text-base text-gray-900">
