@@ -22,7 +22,9 @@ export function StoreNavbar({ store, isTenant }: Props) {
   }, [])
 
   const linkProps = { storeSlug: store.slug, isTenant }
-  const primary = store.primary_color ?? '#6366f1'
+  const primary   = store.primary_color ?? '#6366f1'
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000'
+  const rootUrl    = rootDomain.startsWith('localhost') ? `http://${rootDomain}` : `https://${rootDomain}`
 
   return (
     <header
@@ -66,39 +68,38 @@ export function StoreNavbar({ store, isTenant }: Props) {
 
           {/* Right actions */}
           <div className="flex items-center gap-3">
-            {/* Search */}
-            <SubdomainAwareLink
-              href="/search"
-              {...linkProps}
+            {/* Search — goes to root marketplace */}
+            <a
+              href={`${rootUrl}/search`}
               className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 transition-colors"
             >
               🔍
-            </SubdomainAwareLink>
+            </a>
 
-            {/* Cart */}
-            <CartDrawer store={store} />
+            {/* Cart — goes to root marketplace cart */}
+            <a
+              href={`${rootUrl}/cart`}
+              className="relative w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 transition-colors"
+            >
+              🛒
+            </a>
 
-            {/* Account */}
-            <SubdomainAwareLink
-              href="/account"
-              {...linkProps}
+            {/* Account — goes to root marketplace account */}
+            <a
+              href={`${rootUrl}/account`}
               className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 transition-colors"
             >
               👤
-            </SubdomainAwareLink>
+            </a>
 
-            {/* Back to marketplace (only on tenant domain) */}
-            {isTenant && (
-              <a
-                href={`https://${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'mymarket.com'}`}
-                className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors border border-gray-200 rounded-xl px-3 py-2"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <span>🏪</span>
-                <span>Marketplace</span>
-              </a>
-            )}
+            {/* Back to marketplace — always visible on tenant domains */}
+            <a
+              href={rootUrl}
+              className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors border border-gray-200 rounded-xl px-3 py-2"
+            >
+              <span>🏪</span>
+              <span>Marketplace</span>
+            </a>
           </div>
         </div>
       </div>

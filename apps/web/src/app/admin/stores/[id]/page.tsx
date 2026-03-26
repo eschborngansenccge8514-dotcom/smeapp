@@ -4,6 +4,7 @@ import { StatusBadge } from '@/components/admin/ui/StatusBadge'
 import { formatDate } from '@/lib/date'
 import { formatPrice } from '@/lib/utils'
 import { Store, User, Phone, MapPin, Package, Clock } from 'lucide-react'
+import { EditStoreForm } from '@/components/admin/stores/EditStoreForm'
 
 export default async function StoreDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -102,6 +103,13 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
               </div>
             </div>
           </div>
+
+          <EditStoreForm store={{ 
+            id: store.id, 
+            name: store.name, 
+            slug: store.slug, 
+            is_active: store.is_active 
+          }} />
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ImageUpload } from '@/components/merchant/ImageUpload'
@@ -20,6 +20,8 @@ const BUSINESS_TYPES = [
 export function Step2Store({ userId, storeId }: { userId: string; storeId?: string }) {
   const router = useRouter()
   const [name, setName]             = useState('')
+  const [slug, setSlug]             = useState('')
+  const [isSlugManual, setIsManual] = useState(false)
   const [description, setDesc]      = useState('')
   const [category, setCategory]     = useState('')
   const [address, setAddress]       = useState('')
@@ -29,20 +31,77 @@ export function Step2Store({ userId, storeId }: { userId: string; storeId?: stri
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState('')
 
+  // Auto-generate slug from name
+  function generateSlug(val: string) {
+    return val
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+  }
+
+  function handleNameChange(val: string) {
+    setName(val)
+    if (!isSlugManual) {
+      setSlug(generateSlug(val))
+    }
+  }
+
+  async function checkSlugUnique(val: string) {
+    const supabase = createClient()
+    const { data } = await supabase
+      .from('stores')
+      .select('id')
+      .eq('slug', val)
+      .maybeSingle()
+    return !data || data.id === storeId
+  }
+
+  // Prefill data if storeId exists
+  useEffect(() => {
+    if (!storeId) return
+    const supabase = createClient()
+    supabase.from('stores').select('*').eq('id', storeId).single()
+      .then(({ data }) => {
+        if (data) {
+          setName(data.name || '')
+          setSlug(data.slug || '')
+          if (data.slug) setIsManual(true)
+          setDesc(data.description || '')
+          setCategory(data.category || '')
+          setAddress(data.address || '')
+          setBizType(data.business_type || '')
+          setRegNo(data.business_reg_no || '')
+          setLogoUrl(data.logo_url)
+        }
+      })
+  }, [storeId])
+
   async function handleNext(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim())     { setError('Store name is required'); return }
+    if (!slug.trim())     { setError('Subdomain is required'); return }
+    if (!/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/.test(slug)) {
+      setError('Invalid subdomain format. Use lowercase, numbers, and hyphens (min 3 chars).')
+      return
+    }
     if (!category)        { setError('Please select a category'); return }
     if (!address.trim())  { setError('Address is required'); return }
     if (!businessType)    { setError('Please select a business type'); return }
     setLoading(true); setError('')
+
+    const isUnique = await checkSlugUnique(slug)
+    if (!isUnique) {
+      setError('This subdomain is already taken. Please choose another.')
+      setLoading(false)
+      return
+    }
 
     const supabase = createClient()
 
     if (storeId) {
       // Update existing draft store
       const { error } = await supabase.from('stores').update({
-        name: name.trim(), description: description.trim() || null,
+        name: name.trim(), slug: slug.trim(), description: description.trim() || null,
         category, address: address.trim(),
         business_type: businessType,
         business_reg_no: regNo.trim() || null,
@@ -55,6 +114,7 @@ export function Step2Store({ userId, storeId }: { userId: string; storeId?: stri
       const { error } = await supabase.from('stores').insert({
         owner_id: userId,
         name: name.trim(),
+        slug: slug.trim(),
         description: description.trim() || null,
         category,
         address: address.trim(),
@@ -95,10 +155,31 @@ export function Step2Store({ userId, storeId }: { userId: string; storeId?: stri
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
             Store name <span className="text-red-500">*</span>
           </label>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+          <input type="text" value={name} onChange={(e) => handleNameChange(e.target.value)}
             placeholder="e.g. Mak Cik Nasi Lemak" maxLength={60}
             className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 text-gray-900" />
           <p className="text-xs text-gray-400 mt-1">{name.length}/60 characters</p>
+        </div>
+
+        {/* Subdomain */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            Store Subdomain <span className="text-red-500">*</span>
+          </label>
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <input type="text" value={slug} 
+                onChange={(e) => { setSlug(generateSlug(e.target.value)); setIsManual(true) }}
+                placeholder="mak-cik-nasilemak"
+                className="w-full border border-gray-300 rounded-xl pl-4 pr-32 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 text-gray-900" />
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium pointer-events-none">
+                .smeapp.com
+              </div>
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 mt-1.5">
+            This will be your permanent store URL. Choose wisely!
+          </p>
         </div>
 
         {/* Description */}
