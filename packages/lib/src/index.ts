@@ -8,8 +8,9 @@ export { ringgitToSen, senToRinggit, formatOrderId } from './payment'
 export * from './billplz/client'
 export * from './lalamove/client'
 export * from './easyparcel/client'
-export * from './gmc/productSync'
-export * from './gmc/client'
-export * from './gmc/dataSource'
+export * from './geocoding/geocodeMapsCo'
+// export * from './gmc/productSync'
+// export * from './gmc/client'
+// export * from './gmc/dataSource'
 // export * from './hooks/useAuth'   ← moved to @repo/lib/client
 // export * from './stores/cartStore' ← moved to @repo/lib/client

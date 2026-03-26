@@ -290,6 +290,11 @@ export type Database = {
           postcode: string
           state: string
           updated_at: string
+          bank_name: string | null
+          bank_account_number: string | null
+          bank_account_holder_name: string | null
+          accepts_razorpay: boolean | null
+          accepts_billplz: boolean | null
         }
         Insert: {
           address: string
@@ -307,6 +312,11 @@ export type Database = {
           postcode: string
           state: string
           updated_at?: string
+          bank_name?: string | null
+          bank_account_number?: string | null
+          bank_account_holder_name?: string | null
+          accepts_razorpay?: boolean | null
+          accepts_billplz?: boolean | null
         }
         Update: {
           address?: string
@@ -324,6 +334,11 @@ export type Database = {
           postcode?: string
           state?: string
           updated_at?: string
+          bank_name?: string | null
+          bank_account_number?: string | null
+          bank_account_holder_name?: string | null
+          accepts_razorpay?: boolean | null
+          accepts_billplz?: boolean | null
         }
         Relationships: [
           {

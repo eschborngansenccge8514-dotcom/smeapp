@@ -4,6 +4,11 @@ import { createBill } from '@repo/lib'
 import { createSupabaseAdmin } from '@/lib/supabase/admin'
 
 export async function POST(req: NextRequest) {
+  console.log('ENV CHECK:', {
+    hasKey: !!process.env.BILLPLZ_API_KEY,
+    isSandbox: process.env.BILLPLZ_SANDBOX,
+    hasCollection: !!process.env.BILLPLZ_COLLECTION_ID,
+  })
   try {
     const supabase = await createSupabaseServer()
     const admin = createSupabaseAdmin()

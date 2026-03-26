@@ -97,7 +97,7 @@ export function OrderTracker({ orderId, initialOrder }: any) {
                 <Truck size={20} className="text-indigo-600" />
               </div>
               <div>
-                <p className="font-bold text-gray-900">{delivery.provider === 'lalamove' ? 'Lalamove Delivery' : 'Standard Shipping'}</p>
+                <p className="font-bold text-gray-900">{delivery.provider === 'lalamove' ? 'Lalamove Delivery' : 'Easyparcel Delivery'}</p>
                 <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Courier Information</p>
               </div>
             </div>

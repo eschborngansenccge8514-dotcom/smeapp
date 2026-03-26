@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: [
+    '@google-shopping/products',
+    '@google-shopping/datasources',
+    'google-auth-library'
+  ],
   images: {
     remotePatterns: [
       {

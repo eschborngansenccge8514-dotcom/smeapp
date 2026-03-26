@@ -1,86 +1,73 @@
-import { createSupabaseServer } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
-import { formatPrice } from '@/lib/utils'
+'use client'
+import { createSupabaseBrowser } from '@/lib/supabase/client'
+import { useEffect, useState } from 'react'
+import { CrmContactTable } from '@/components/dashboard/crm/CrmContactTable'
 
-export default async function MerchantCustomersPage() {
-  const supabase = await createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+export default function MerchantCustomersPage() {
+  const [store, setStore] = useState<any>(null)
+  const supabase = createSupabaseBrowser()
 
-  const { data: store } = await supabase
-    .from('stores').select('id').eq('owner_id', user.id).single()
-
-  // Get customers who have ordered from this store
-  const { data: customers } = await supabase
-    .from('orders')
-    .select('customer_id, profiles(id, full_name, email, phone, avatar_url), total_amount, status')
-    .eq('store_id', store!.id)
-    .eq('status', 'delivered')
-
-  // Group by customer_id
-  const customerSummary = customers?.reduce((acc: any, order: any) => {
-    const cid = order.profiles?.id
-    if (!cid) return acc
-    if (!acc[cid]) {
-      acc[cid] = {
-        name: order.profiles.full_name,
-        email: order.profiles.email,
-        phone: order.profiles.phone,
-        avatar_url: order.profiles.avatar_url,
-        orderCount: 0,
-        totalSpent: 0,
+  useEffect(() => {
+    async function getStore() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data } = await supabase
+          .from('stores')
+          .select('*')
+          .eq('owner_id', user.id)
+          .single()
+        setStore(data)
       }
     }
-    acc[cid].orderCount += 1
-    acc[cid].totalSpent += order.total_amount
-    return acc
-  }, {})
+    getStore()
+  }, [supabase])
 
-  const customersList = Object.values(customerSummary || {}).sort((a: any, b: any) => b.totalSpent - a.totalSpent)
+  if (!store) return <div className="p-8 animate-pulse bg-gray-50 rounded-[40px] h-[600px]" />
+
+  const primaryColor = store.brand_primary_color || '#6366F1'
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
-        <p className="text-sm text-gray-500 mt-1">Customers who have ordered from you</p>
-      </div>
+    <div className="max-w-7xl mx-auto space-y-10 pb-20">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+         <div className="lg:col-span-3">
+            <CrmContactTable storeId={store.id} primaryColor={primaryColor} />
+         </div>
+         
+         <div className="space-y-6">
+            <div className="bg-gray-900 rounded-[40px] p-8 text-white shadow-2xl relative overflow-hidden group">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:scale-150 transition-all duration-700" />
+               <div className="relative z-10">
+                 <h3 className="text-xs font-black uppercase tracking-[0.3em] text-gray-400 mb-6">Audience Growth</h3>
+                 <div className="flex items-baseline gap-2 mb-2">
+                    <span className="text-5xl font-black">2.4k</span>
+                    <span className="text-green-400 text-xs font-bold font-bold">↑ 12%</span>
+                 </div>
+                 <p className="text-sm font-medium text-gray-500 mb-8 italic">"Your organic reach is expanding."</p>
+                 <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden">
+                    <div className="w-3/4 h-full bg-indigo-500 rounded-full" />
+                 </div>
+               </div>
+            </div>
 
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead>
-              <tr className="border-b border-gray-100 text-gray-400 font-medium">
-                <th className="pb-3 pr-4">Customer</th>
-                <th className="pb-3 px-4">Contact</th>
-                <th className="pb-3 px-4">Orders</th>
-                <th className="pb-3 pl-4 text-right">Total Spent</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {customersList.map((c: any) => (
-                <tr key={c.email}>
-                  <td className="py-3 pr-4 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-600">
-                      {c.name?.[0]?.toUpperCase()}
-                    </div>
-                    <span className="font-medium text-gray-900">{c.name}</span>
-                  </td>
-                  <td className="py-3 px-4 text-gray-600">
-                    <p className="text-xs">{c.email}</p>
-                    <p className="text-xs">{c.phone}</p>
-                  </td>
-                  <td className="py-3 px-4 text-gray-600">{c.orderCount}</td>
-                  <td className="py-3 pl-4 text-right font-bold text-indigo-600">{formatPrice(c.totalSpent)}</td>
-                </tr>
-              ))}
-              {customersList.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="py-10 text-center text-gray-400">No customers found yet</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+            <div className="bg-white rounded-[40px] border border-gray-100 p-8 shadow-sm space-y-6">
+               <h3 className="text-xs font-black uppercase tracking-[0.3em] text-gray-400">Quick Segments</h3>
+               <div className="space-y-4">
+                  {[
+                    { label: 'High Value', count: 124, icon: '💎', color: 'blue' },
+                    { label: 'Recent Buyers', count: 56, icon: '🔥', color: 'orange' },
+                    { label: 'Dormant', count: 89, icon: '💤', color: 'gray' },
+                  ].map((s) => (
+                    <button key={s.label} className="w-full group flex items-center justify-between p-1 hover:pr-2 transition-all">
+                       <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-sm shadow-sm border border-gray-100 group-hover:scale-110 transition-transform`}>{s.icon}</div>
+                          <span className="text-sm font-bold text-gray-900">{s.label}</span>
+                       </div>
+                       <span className="text-xs font-black text-gray-400">{s.count}</span>
+                    </button>
+                  ))}
+               </div>
+            </div>
+         </div>
       </div>
     </div>
   )

@@ -20,7 +20,7 @@ export default async function MerchantLayout({ children }: { children: React.Rea
   // Fetch merchant's store
   const { data: store } = await supabase
     .from('stores')
-    .select('id, name, logo_url, is_active')
+    .select('id, name, logo_url, is_active, brand_primary_color')
     .eq('owner_id', user.id)
     .single()
 

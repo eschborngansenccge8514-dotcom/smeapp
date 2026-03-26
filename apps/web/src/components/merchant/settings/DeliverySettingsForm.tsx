@@ -132,7 +132,7 @@ export function DeliverySettingsForm({ storeId, config }: DeliverySettingsFormPr
         <ProviderRow
           icon={<Package size={18} className="text-blue-500" />}
           bg="bg-blue-100"
-          label="Standard Shipping (EasyParcel)"
+          label="Easyparcel"
           description="1–5 business days via courier (requires store postcode/state below)"
           active={form.delivery_enabled_easyparcel}
           onToggle={() => toggle('delivery_enabled_easyparcel')}

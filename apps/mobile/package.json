@@ -5,8 +5,8 @@
   "scripts": {
     "start": "expo start",
     "dev": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios --device \"JJ iPhone\"",
     "web": "expo start --web",
     "brand:default": "node scripts/switch-brand.js default && expo start",
     "brand:example-merchant": "node scripts/switch-brand.js example-merchant && expo start",

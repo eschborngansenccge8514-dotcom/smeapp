@@ -15,8 +15,8 @@ interface DeliveryStepProps {
 interface QuoteResult {
   enabledProviders?: { lalamove: boolean; easyparcel: boolean; self_pickup: boolean }
   freeThreshold?: number | null
-  lalamove?: { fee: number; eta: string }
-  easyparcel?: { options: any[] }
+  lalamove?: { fee?: number; eta?: string; error?: string }
+  easyparcel?: { options?: any[]; error?: string }
 }
 
 export function DeliveryStep({
@@ -31,14 +31,56 @@ export function DeliveryStep({
 
   useEffect(() => { fetchQuotes() }, [address, storeId])
 
+  /** Resolve lat/lng for an address if they are missing. Saves result back to DB. */
+  async function geocodeIfMissing(addr: any): Promise<any> {
+    if (addr?.lat && addr?.lng) return addr           // already has coordinates
+    if (!addr?.address_line) return addr              // nothing to geocode
+
+    try {
+      const fullAddress = [
+        addr.address_line,
+        addr.postcode,
+        addr.city,
+        addr.state,
+        'Malaysia',
+      ].filter(Boolean).join(', ')
+
+      const res = await fetch('/api/geocode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: fullAddress }),
+      })
+      if (res.ok) {
+        const geo = await res.json()
+        const enriched = { ...addr, lat: geo.lat, lng: geo.lon }
+
+        // Persist back to Supabase so future checkouts skip re-geocoding
+        if (addr.id) {
+          try {
+            const { createSupabaseBrowser } = await import('@/lib/supabase/client')
+            const supabase = createSupabaseBrowser()
+            await supabase
+              .from('addresses')
+              .update({ lat: geo.lat, lng: geo.lon })
+              .eq('id', addr.id)
+          } catch { /* non-fatal */ }
+        }
+
+        return enriched
+      }
+    } catch { /* non-fatal — proceed with missing coords */ }
+    return addr
+  }
+
   async function fetchQuotes() {
     if (!address) return
     setLoading(true)
     try {
+      const enrichedAddress = await geocodeIfMissing(address)
       const res = await fetch('/api/delivery/quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storeId, address }),
+        body: JSON.stringify({ storeId, address: enrichedAddress }),
       })
       const data: QuoteResult = await res.json()
       setQuotes(data)
@@ -86,8 +128,21 @@ export function DeliveryStep({
         <div className="space-y-3">
           {/* Lalamove */}
           {providers.lalamove && quotes.lalamove && (
+            quotes.lalamove.error ? (
+              <div className="w-full text-left p-4 rounded-2xl border-2 border-red-100 bg-red-50 opacity-75">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
+                    <Zap size={20} className="text-red-500" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900">Lalamove Unavailable</p>
+                    <p className="text-sm text-red-600">{quotes.lalamove.error}</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
             <button
-              onClick={() => selectOption('lalamove', quotes.lalamove!.fee, quotes.lalamove)}
+              onClick={() => selectOption('lalamove', quotes.lalamove!.fee!, quotes.lalamove)}
               className={`w-full text-left p-4 rounded-2xl border-2 transition-colors
                 ${selected === 'lalamove' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300'}`}
             >
@@ -98,24 +153,39 @@ export function DeliveryStep({
                   </div>
                   <div>
                     <p className="font-bold text-gray-900">Lalamove</p>
-                    <p className="text-sm text-gray-500">Same-day · ETA {quotes.lalamove.eta}</p>
+                    <p className="text-sm text-gray-500">Usually for short distance delivery</p>
+                    <p className="text-sm text-indigo-600 font-medium">ETA: {quotes.lalamove.eta}</p>
                   </div>
                 </div>
                 <span className="font-bold text-indigo-700">
-                  {isFreeDelivery ? <span className="text-green-600">FREE</span> : formatPrice(quotes.lalamove.fee)}
+                  {isFreeDelivery ? <span className="text-green-600">FREE</span> : formatPrice(quotes.lalamove.fee!)}
                 </span>
               </div>
             </button>
+            )
           )}
 
           {/* EasyParcel */}
-          {providers.easyparcel && quotes.easyparcel?.options && quotes.easyparcel.options.length > 0 && (
+          {providers.easyparcel && quotes.easyparcel && (
+            quotes.easyparcel.error || !quotes.easyparcel.options?.length ? (
+              <div className="w-full text-left p-4 rounded-2xl border-2 border-red-100 bg-red-50 opacity-75">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
+                    <Package size={20} className="text-red-500" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900">Easyparcel Unavailable</p>
+                    <p className="text-sm text-red-600">{quotes.easyparcel.error || 'No delivery options available for this address.'}</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
             <div className={`border-2 rounded-2xl transition-colors
               ${selected === 'easyparcel' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'}`}>
               <button
                 onClick={() => {
                   setSelected('easyparcel')
-                  const first = quotes.easyparcel!.options[0]
+                  const first = quotes.easyparcel!.options![0]
                   setSelectedCourier(first)
                   selectOption('easyparcel', first.price, first)
                 }}
@@ -126,14 +196,14 @@ export function DeliveryStep({
                     <Package size={20} className="text-blue-500" />
                   </div>
                   <div>
-                    <p className="font-bold text-gray-900">Standard Shipping</p>
-                    <p className="text-sm text-gray-500">via EasyParcel · 1–5 business days</p>
+                    <p className="font-bold text-gray-900">Easyparcel</p>
+                    <p className="text-sm text-gray-500">Usually for long distance delivery</p>
                   </div>
                 </div>
               </button>
               {selected === 'easyparcel' && (
                 <div className="px-4 pb-4 space-y-2">
-                  {quotes.easyparcel.options.map((opt: any) => (
+                  {quotes.easyparcel.options!.map((opt: any) => (
                     <button key={opt.service_id}
                       onClick={() => { setSelectedCourier(opt); selectOption('easyparcel', opt.price, opt) }}
                       className={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors
@@ -150,6 +220,7 @@ export function DeliveryStep({
                 </div>
               )}
             </div>
+            )
           )}
 
           {/* Self Pickup */}

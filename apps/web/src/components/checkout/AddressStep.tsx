@@ -23,9 +23,38 @@ export function AddressStep({ addresses, selected, onSelect, onNext, userId }: a
       return
     }
     setSaving(true)
+
+    let coords: any = { lat: null, lng: null }
+
+    // If coordinates are missing, try to geocode automatically
+    if (!coords.lat || !coords.lng) {
+      try {
+        const fullAddress = `${form.address_line}, ${form.postcode} ${form.city}, ${form.state}, Malaysia`
+        const res = await fetch('/api/geocode', {
+          method: 'POST',
+          body: JSON.stringify({ address: fullAddress })
+        })
+        if (res.ok) {
+          const geo = await res.json()
+          if (geo?.lat && geo?.lon) {
+            coords.lat = geo.lat.toString()
+            coords.lng = geo.lon.toString()
+          }
+        }
+      } catch (e) {
+        console.error('Auto-geocoding failed:', e)
+      }
+    }
+
     const { data, error } = await supabase
       .from('addresses')
-      .insert({ ...form, customer_id: userId, is_default: addresses.length === 0 })
+      .insert({ 
+        ...form, 
+        lat: coords.lat ? parseFloat(coords.lat) : null,
+        lng: coords.lng ? parseFloat(coords.lng) : null,
+        customer_id: userId, 
+        is_default: addresses.length === 0 
+      })
       .select()
       .single()
     if (error) {
@@ -112,6 +141,8 @@ export function AddressStep({ addresses, selected, onSelect, onNext, userId }: a
             </div>
             <Input label="Postcode *" value={form.postcode} onChange={(v: string) => up('postcode', v)} placeholder="56000" />
           </div>
+
+          {/* Geolocation handled silently on save */}
           <div className="flex gap-2 pt-1">
             <button onClick={saveAddress} disabled={saving}
               className="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50">

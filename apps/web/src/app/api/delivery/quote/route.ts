@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '@/lib/supabase/admin'
-import { getLalamoveQuote, getEasyParcelRates } from '@repo/lib'
+import { getLalamoveQuote, getEasyParcelRates, geocodeAddress } from '@repo/lib'
 
 export async function POST(req: NextRequest) {
   const { storeId, address } = await req.json()
@@ -20,62 +20,104 @@ export async function POST(req: NextRequest) {
 
   if (!store) return NextResponse.json({ error: 'Store not found' }, { status: 404 })
 
-  const result: any = {
-    // Always expose which providers the store has enabled so the UI can show/hide options
-    enabledProviders: {
-      lalamove:   store.delivery_enabled_lalamove   ?? true,
-      easyparcel: store.delivery_enabled_easyparcel  ?? true,
-      self_pickup: store.delivery_enabled_self_pickup ?? true,
-    },
-    freeThreshold: store.delivery_free_threshold ?? null,
+  // ── Geocode BOTH concurrently if missing coordinates ───────────────────────
+  const [geoStoreRes, geoAddrRes] = await Promise.allSettled([
+    !store.lat || !store.lng
+      ? store.address ? geocodeAddress(store.address) : null
+      : null,
+    !address.lat || !address.lng
+      ? address.address_line
+        ? geocodeAddress(
+            [address.address_line, address.postcode, address.city, address.state, 'Malaysia'].filter(Boolean).join(', ')
+          )
+        : null
+      : null,
+  ])
+
+  let storeWithCoords = store as any
+  if (geoStoreRes.status === 'fulfilled' && geoStoreRes.value) {
+    storeWithCoords = { ...store, lat: geoStoreRes.value.lat, lng: geoStoreRes.value.lon }
+    await admin.from('stores').update({ lat: geoStoreRes.value.lat, lng: geoStoreRes.value.lon }).eq('id', store.id)
   }
 
-  // Calculate distance (simple Haversine)
-  const distanceKm = address.lat && address.lng && store.lat && store.lng
-    ? haversineKm(store.lat, store.lng, address.lat, address.lng)
-    : null
-
-  const maxRadius = store.delivery_max_radius_km ?? 30
-
-  // Lalamove: enabled by merchant + within configured radius + coordinates known
-  if (
-    (store.delivery_enabled_lalamove ?? true) &&
-    distanceKm !== null &&
-    distanceKm <= maxRadius
-  ) {
-    try {
-      const quote = await getLalamoveQuote({
-        fromLat: store.lat, fromLng: store.lng,
-        toLat: address.lat, toLng: address.lng,
-        fromAddress: store.address,
-        toAddress: `${address.address_line}, ${address.city}, ${address.state}`,
-      })
-      result.lalamove = {
-        fee:     parseFloat((quote.data?.totalFee?.amount / 100).toFixed(2)),
-        eta:     quote.data?.stops?.[1]?.normalEta ?? '45 min',
-        quoteId: quote.data?.quotationId,
-        distanceKm,
-      }
-    } catch (e) {
-      console.warn('[Delivery Quote] Lalamove failed:', e)
+  let addrWithCoords = address
+  if (geoAddrRes.status === 'fulfilled' && geoAddrRes.value) {
+    addrWithCoords = { ...address, lat: geoAddrRes.value.lat, lng: geoAddrRes.value.lon }
+    if (address.id) {
+      await admin.from('addresses').update({ lat: geoAddrRes.value.lat, lng: geoAddrRes.value.lon }).eq('id', address.id)
     }
   }
 
-  // EasyParcel: enabled by merchant + postcode data available
-  if (store.delivery_enabled_easyparcel ?? true) {
-    try {
-      const rates = await getEasyParcelRates({
-        fromPostcode: store.postcode ?? '50450',
-        fromState:    store.state ?? 'Kuala Lumpur',
-        toPostcode:   address.postcode,
-        toState:      address.state,
-        weight:       0.5, // default; caller can pass actual cart weight
-      })
-      if (rates.length > 0) {
-        result.easyparcel = { options: rates.slice(0, 5) }
+  const result: any = {
+    enabledProviders: {
+      lalamove:    storeWithCoords.delivery_enabled_lalamove   ?? true,
+      easyparcel:  storeWithCoords.delivery_enabled_easyparcel  ?? true,
+      self_pickup: storeWithCoords.delivery_enabled_self_pickup ?? true,
+    },
+    freeThreshold: storeWithCoords.delivery_free_threshold ?? null,
+  }
+
+  const distanceKm = addrWithCoords.lat && addrWithCoords.lng && storeWithCoords.lat && storeWithCoords.lng
+    ? haversineKm(storeWithCoords.lat, storeWithCoords.lng, addrWithCoords.lat, addrWithCoords.lng)
+    : null
+  const maxRadius = storeWithCoords.delivery_max_radius_km ?? 30
+  const isLalamoveAllowed = (storeWithCoords.delivery_enabled_lalamove ?? true) && (distanceKm === null || distanceKm <= maxRadius)
+  const isEasyParcelAllowed = storeWithCoords.delivery_enabled_easyparcel ?? true
+
+  // ── Fetch quotes concurrently ──────────────────────────────────────────────
+  const [lalamoveResult, easyparcelResult] = await Promise.allSettled([
+    // LALAMOVE PROMISE
+    isLalamoveAllowed ? (async () => {
+      if (!storeWithCoords.lat || !storeWithCoords.lng || !addrWithCoords.lat || !addrWithCoords.lng) {
+        throw new Error('Coordinates could not be resolved for this address. Please set lat/lng manually in your store delivery settings.')
       }
-    } catch (e) {
-      console.warn('[Delivery Quote] EasyParcel failed:', e)
+      const quote = await getLalamoveQuote({
+        fromLat: storeWithCoords.lat, fromLng: storeWithCoords.lng,
+        toLat: addrWithCoords.lat, toLng: addrWithCoords.lng,
+        fromAddress: storeWithCoords.address,
+        toAddress: `${addrWithCoords.address_line}, ${addrWithCoords.city}, ${addrWithCoords.state}`,
+      })
+      return {
+        fee:      parseFloat(quote.data?.priceBreakdown?.total ?? '0'),
+        currency: quote.data?.priceBreakdown?.currency ?? 'MYR',
+        eta:      '30–60 min',
+        quoteId:  quote.data?.quotationId,
+        distanceKm,
+      }
+    })() : Promise.resolve(null),
+
+    // EASYPARCEL PROMISE
+    isEasyParcelAllowed ? (async () => {
+      if (!storeWithCoords.postcode || !addrWithCoords.postcode) {
+        throw new Error('Missing postcode for EasyParcel — please enter your postcode in the address form')
+      }
+      const rates = await getEasyParcelRates({
+        fromPostcode: storeWithCoords.postcode,
+        fromState:    storeWithCoords.state ?? 'Kuala Lumpur',
+        toPostcode:   addrWithCoords.postcode,
+        toState:      addrWithCoords.state,
+        weight:       0.5,
+      })
+      if (rates.length > 0) return { options: rates.slice(0, 5) }
+      throw new Error('No EasyParcel rates returned for this route')
+    })() : Promise.resolve(null),
+  ])
+
+  // Lalamove result
+  if (isLalamoveAllowed) {
+    if (lalamoveResult.status === 'fulfilled' && lalamoveResult.value) {
+      result.lalamove = lalamoveResult.value
+    } else if (lalamoveResult.status === 'rejected') {
+      result.lalamove = { error: lalamoveResult.reason.message }
+    }
+  }
+
+  // EasyParcel result
+  if (isEasyParcelAllowed) {
+    if (easyparcelResult.status === 'fulfilled' && easyparcelResult.value) {
+      result.easyparcel = easyparcelResult.value
+    } else if (easyparcelResult.status === 'rejected') {
+      result.easyparcel = { error: easyparcelResult.reason.message }
     }
   }
 

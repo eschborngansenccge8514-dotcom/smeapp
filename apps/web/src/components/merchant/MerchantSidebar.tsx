@@ -4,7 +4,8 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, ShoppingBag, Package,
   BarChart2, Users, Tag, Star, Wallet,
-  Store, Palette, ChevronRight, Truck
+  Store, Palette, ChevronRight, Truck, Landmark,
+  Mail, Bell, Globe
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -14,12 +15,16 @@ const NAV_ITEMS = [
   { label: 'Products',       href: '/merchant/products',       icon: Package },
   { label: 'Analytics',      href: '/merchant/analytics',      icon: BarChart2 },
   { label: 'Customers',      href: '/merchant/customers',      icon: Users },
+  { label: 'Email Marketing', href: '/merchant/email-marketing', icon: Mail },
   { label: 'Promotions',     href: '/merchant/promotions',     icon: Tag },
   { label: 'Reviews',        href: '/merchant/reviews',        icon: Star },
+  { label: 'Notifications',  href: '/merchant/notifications',  icon: Bell },
   { label: 'Payouts',          href: '/merchant/payouts',           icon: Wallet },
+  { label: 'Payment Config',   href: '/merchant/settings/payment',  icon: Landmark },
   { label: 'Store Settings',   href: '/merchant/store-settings',    icon: Store },
   { label: 'Brand Settings',   href: '/merchant/brand-settings',    icon: Palette },
   { label: 'Delivery',         href: '/merchant/settings/delivery', icon: Truck },
+  { label: 'GMC Settings',     href: '/merchant/settings/gmc',      icon: Globe },
 ]
 
 export function MerchantSidebar({ store }: { store: any }) {

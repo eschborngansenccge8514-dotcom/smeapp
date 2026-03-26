@@ -19,6 +19,7 @@
       "persistent": true
     },
     "lint": {},
+    "test": {},
     "type-check": {}
   }
 }

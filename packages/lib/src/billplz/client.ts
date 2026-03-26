@@ -1,16 +1,34 @@
-const BILLPLZ_BASE = process.env.BILLPLZ_SANDBOX === 'true'
-  ? 'https://www.billplz-sandbox.com/api'
-  : 'https://www.billplz.com/api'
+// Add this at the top of client.ts — runs once on import
+const REQUIRED_ENV = ['BILLPLZ_API_KEY', 'BILLPLZ_COLLECTION_ID', 'BILLPLZ_X_SIGNATURE_KEY']
+for (const key of REQUIRED_ENV) {
+  if (!process.env[key]) console.warn(`Missing required env var: ${key}`)
+}
 
-const BILLPLZ_BILL_BASE = process.env.BILLPLZ_SANDBOX === 'true'
-  ? 'https://www.billplz-sandbox.com/bills'
-  : 'https://www.billplz.com/bills'
+function getBase() {
+  return process.env.BILLPLZ_SANDBOX === 'true'
+    ? 'https://www.billplz-sandbox.com/api'
+    : 'https://www.billplz.com/api'
+}
 
-const AUTH = Buffer.from(`${process.env.BILLPLZ_API_KEY}:`).toString('base64')
+function getBillBase() {
+  return process.env.BILLPLZ_SANDBOX === 'true'
+    ? 'https://www.billplz-sandbox.com/bills'
+    : 'https://www.billplz.com/bills'
+}
 
-const HEADERS = {
-  'Authorization': `Basic ${AUTH}`,
-  'Content-Type': 'application/x-www-form-urlencoded',
+export function getAuth() {
+  const apiKey = process.env.BILLPLZ_API_KEY
+  if (!apiKey) {
+    throw new Error('BILLPLZ_API_KEY is not set in environment variables')
+  }
+  return Buffer.from(`${apiKey}:`).toString('base64')
+}
+
+function getHeaders() {
+  return {
+    'Authorization': `Basic ${getAuth()}`,
+    'Content-Type': 'application/x-www-form-urlencoded',
+  }
 }
 
 export interface CreateBillParams {
@@ -50,9 +68,9 @@ export async function createBill(params: CreateBillParams): Promise<BillplzBill>
     body.set('mobile', params.customerPhone.replace(/[^0-9+]/g, ''))
   }
 
-  const res = await fetch(`${BILLPLZ_BASE}/v3/bills`, {
+  const res = await fetch(`${getBase()}/v3/bills`, {
     method: 'POST',
-    headers: HEADERS,
+    headers: getHeaders(),
     body: body.toString(),
   })
 
@@ -65,16 +83,16 @@ export async function createBill(params: CreateBillParams): Promise<BillplzBill>
 }
 
 export async function getBill(billId: string): Promise<BillplzBill> {
-  const res = await fetch(`${BILLPLZ_BASE}/v3/bills/${billId}`, {
-    headers: { 'Authorization': `Basic ${AUTH}` },
+  const res = await fetch(`${getBase()}/v3/bills/${billId}`, {
+    headers: { 'Authorization': `Basic ${getAuth()}` },
   })
   return res.json()
 }
 
 export async function deleteBill(billId: string): Promise<void> {
-  await fetch(`${BILLPLZ_BASE}/v3/bills/${billId}`, {
+  await fetch(`${getBase()}/v3/bills/${billId}`, {
     method: 'DELETE',
-    headers: { 'Authorization': `Basic ${AUTH}` },
+    headers: { 'Authorization': `Basic ${getAuth()}` },
   })
 }
 
@@ -96,6 +114,6 @@ export function verifyXSignature(params: Record<string, string>): boolean {
 }
 
 export function getBillUrl(billId: string, bankCode?: string): string {
-  const url = `${BILLPLZ_BILL_BASE}/${billId}`
-  return bankCode ? `${url}?auto_submit=true` : url
+  const url = `${getBillBase()}/${billId}`
+  return bankCode ? `${url}?bank_code=${bankCode}&auto_submit=true` : url
 }

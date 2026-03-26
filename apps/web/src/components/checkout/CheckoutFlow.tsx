@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCartStore } from '@/stores/cartStore'
 import { AddressStep } from './AddressStep'
 import { DeliveryStep } from './DeliveryStep'
@@ -34,6 +34,12 @@ export function CheckoutFlow({ addresses, profile, userId }: any) {
     notes: '',
   })
 
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   function update(key: keyof CheckoutState, value: any) {
     setState((s) => ({ ...s, [key]: value }))
   }
@@ -41,6 +47,8 @@ export function CheckoutFlow({ addresses, profile, userId }: any) {
   const subtotal     = getTotal()
   const serviceFee   = Math.round(subtotal * 0.02 * 100) / 100
   const total        = subtotal + state.deliveryFee + serviceFee - state.discountAmount
+
+  if (!mounted) return null
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

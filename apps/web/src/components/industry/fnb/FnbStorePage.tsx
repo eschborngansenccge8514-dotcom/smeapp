@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useCartStore } from '@/stores/useCartStore'
 import { getIndustryTheme } from '@/lib/industry'
 import { FnbHero } from './FnbHero'
@@ -23,6 +23,11 @@ export function FnbStorePage({ store, products }: Props) {
   const [searchQuery, setSearchQuery]         = useState('')
   const [selectedProduct, setSelectedProduct] = useState<FnbProduct | null>(null)
   const [cartOpen, setCartOpen]               = useState(false)
+  const [mounted, setMounted]                 = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const { addItem, clearCart, getItemCount, storeId } = useCartStore()
   const cartCount = getItemCount()
@@ -177,7 +182,7 @@ export function FnbStorePage({ store, products }: Props) {
       </div>
 
       {/* Floating Cart Button */}
-      {cartCount > 0 && (
+      {mounted && cartCount > 0 && (
         <div className="fixed bottom-6 left-4 right-4 max-w-lg mx-auto z-30">
           <button
             onClick={() => setCartOpen(true)}

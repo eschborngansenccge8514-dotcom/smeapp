@@ -43,6 +43,7 @@ export interface LalamoveQuoteParams {
 export async function getLalamoveQuote(params: LalamoveQuoteParams) {
   const body = {
     data: {
+      language:    'en_MY',
       serviceType: params.vehicleType ?? 'MOTORCYCLE',
       stops: [
         {
@@ -54,13 +55,12 @@ export async function getLalamoveQuote(params: LalamoveQuoteParams) {
           address: params.toAddress,
         },
       ],
-      deliveries: [
-        {
-          toStop: 1,
-          toContact: { name: 'Customer', phone: '+60123456789' },
-          remarks: '',
-        },
-      ],
+      item: {
+        quantity:    '1',
+        weight:      'LESS_THAN_3KG',
+        categories:  ['FOOD_AND_BEVERAGE'],
+        handlingInstructions: [],
+      },
     },
   }
   return lalamoveRequest('POST', '/v3/quotations', body)
