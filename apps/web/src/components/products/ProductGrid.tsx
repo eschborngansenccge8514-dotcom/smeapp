@@ -2,14 +2,18 @@ import { ProductCard } from './ProductCard'
 
 export function ProductGrid({
   products,
-  showStore = false,
+  storeSlug = '',
   loading = false,
   cols = 4,
+  onAddToCart,
+  cartQtyMap = {},
 }: {
   products: any[]
-  showStore?: boolean
+  storeSlug?: string
   loading?: boolean
   cols?: 2 | 3 | 4
+  onAddToCart?: (product: any) => void
+  cartQtyMap?: Record<string, number>
 }) {
   const GRID_COLS = {
     2: 'grid-cols-2',
@@ -47,7 +51,13 @@ export function ProductGrid({
   return (
     <div className={`grid ${GRID_COLS[cols]} gap-4`}>
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} showStore={showStore} />
+        <ProductCard
+          key={product.id}
+          product={product}
+          storeSlug={storeSlug || product.store_id}
+          onAddToCart={onAddToCart}
+          cartQty={cartQtyMap[product.id]}
+        />
       ))}
     </div>
   )

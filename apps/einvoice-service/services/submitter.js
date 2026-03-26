@@ -1,6 +1,8 @@
 const config = require('../config');
 const auth   = require('./auth');
 const db     = require('../db/invoice.db');
+const { pool } = require('../db/pool');
+const crypto = require('crypto');
 
 function getApiBase(merchant) {
   return config.getURLs(merchant).API;
@@ -9,7 +11,7 @@ function getApiBase(merchant) {
 /**
  * Submit a signed invoice to LHDN MyInvois API
  */
-async function submitInvoice(merchant, invoiceNumber, signedInvoiceJson) {
+async function submitInvoice(merchant, invoiceNumber, signedInvoiceJson, documentHash = '') {
   const start = Date.now();
   const url   = `${getApiBase(merchant)}/documentsubmissions`;
 
@@ -17,14 +19,26 @@ async function submitInvoice(merchant, invoiceNumber, signedInvoiceJson) {
 
   try {
     const headers = await auth.apiHeaders(merchant);
+
+    const docString = JSON.stringify(signedInvoiceJson);
+    
+    // LHDN REQUIREMENT: "document" property must be BASE64 ENCODED version of the JSON string
+    const b64Document = Buffer.from(docString, 'utf8').toString('base64');
+    
+    // documentHash is the SHA256 of the ORIGINAL string (Base64 of the digest)
+    const calculatedHash = crypto.createHash('sha256').update(docString, 'utf8').digest('base64');
+    
+    console.log(`[DEBUG] Final Document Hash: ${calculatedHash}`);
+    require('fs').writeFileSync('/tmp/lhdn_request.json', docString); // Save raw for inspection
+
     const res = await fetch(url, {
       method:  'POST',
       headers,
       body: JSON.stringify({
         documents: [{
           format:          'JSON',
-          document:        JSON.stringify(signedInvoiceJson),
-          documentHash:    '', // LHDN calculates this from the minified string
+          document:        b64Document,
+          documentHash:    calculatedHash, 
           codeNumber:      invoiceNumber,
         }],
       }),
@@ -37,13 +51,11 @@ async function submitInvoice(merchant, invoiceNumber, signedInvoiceJson) {
       throw new Error(`Submission failed [${res.status}]: ${JSON.stringify(responseBody)}`);
     }
 
-    // Success response contains submissionUID and acceptedDocuments
     const result = responseBody.acceptedDocuments?.[0] || responseBody;
 
-    // Log to standard audit
     await db.auditLog({
       orderNumber:  invoiceNumber,
-      merchant_id:  merchant.id,
+      merchantId:   merchant.id,
       action:       'submission',
       endpoint:     url,
       requestBody:  { invoiceNumber },
@@ -52,7 +64,6 @@ async function submitInvoice(merchant, invoiceNumber, signedInvoiceJson) {
       durationMs:   Date.now() - start,
     }).catch(console.error);
 
-    // If production, log to special compliance table
     if (merchant.env === 'production') {
       await pool.query(`
         INSERT INTO einvoice_production_log 
@@ -60,7 +71,7 @@ async function submitInvoice(merchant, invoiceNumber, signedInvoiceJson) {
         VALUES ($1, $2, $3, $4, $5, $6)
       `, [
         merchant.id, invoiceNumber, result.uuid, result.longId, 
-        signedInvoiceJson.type || '01', 1.0 // Placeholder amount — update builder to pass it
+        '01', 1.0 
       ]).catch(console.error);
     }
 
@@ -69,7 +80,7 @@ async function submitInvoice(merchant, invoiceNumber, signedInvoiceJson) {
   } catch (err) {
     await db.auditLog({
       orderNumber:  invoiceNumber,
-      merchant_id:  merchant.id,
+      merchantId:   merchant.id,
       action:       'submission_error',
       endpoint:     url,
       requestBody:  { invoiceNumber },

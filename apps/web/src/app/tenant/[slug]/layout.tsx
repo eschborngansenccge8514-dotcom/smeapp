@@ -1,5 +1,9 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { TenantThemeProvider } from '@/components/tenant/TenantThemeProvider'
+import { StoreNavbar } from '@/components/tenant/StoreNavbar'
+import { getTenantContext } from '@/lib/tenant'
+import { CartProvider } from '@/contexts/CartProvider'
 
 export default async function TenantLayout({
   children, params: paramsPromise
@@ -8,19 +12,32 @@ export default async function TenantLayout({
   const supabase = await createClient()
   const { data: store } = await supabase
     .from('stores')
-    .select('id, name, brand_primary_color, brand_app_name')
-    .or(`brand_subdomain.eq.${params.slug},brand_custom_domain.eq.${params.slug}`)
+    .select('*, slug, name, primary_color, app_name, font_family, logo_url')
+    .or(`slug.eq.${params.slug},custom_domain.eq.${params.slug}`)
     .eq('is_active', true)
     .single()
 
   if (!store) notFound()
 
-  const primary = store.brand_primary_color ?? '#6366F1'
+  const { isTenant } = await getTenantContext()
 
   return (
-    <>
-      <style>{`:root { --brand-primary: ${primary}; }`}</style>
-      {children}
-    </>
+    <TenantThemeProvider 
+      primaryColor={store.primary_color ?? '#6366F1'} 
+      fontFamily={store.font_family ?? 'Inter'}
+    >
+      <CartProvider
+        key={`cart-${store.slug}`}
+        storeSlug={store.slug}
+        storeId={store.id}
+      >
+        <div className="min-h-screen flex flex-col bg-white">
+          <StoreNavbar store={store} isTenant={isTenant} />
+          <main className="flex-1">
+            {children}
+          </main>
+        </div>
+      </CartProvider>
+    </TenantThemeProvider>
   )
 }

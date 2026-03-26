@@ -11,13 +11,18 @@ export default async function CustomerLoyaltyPage() {
 
   // Fetch all loyalty balances for this user
   const { data: balances } = await supabase
-    .from('loyalty_balances')
+    .from('store_customers')
     .select(`
-      *,
+      id,
+      loyalty_points,
+      lifetime_points,
+      loyalty_tier,
+      updated_at,
       store:stores(id, name, logo_url),
-      tier:loyalty_tiers(*)
+      tier:current_tier_id(*)
     `)
     .eq('user_id', user.id)
+    .gt('loyalty_points', 0)
     .order('updated_at', { ascending: false })
 
   // Fetch recent transactions
@@ -78,13 +83,13 @@ export default async function CustomerLoyaltyPage() {
                            ) : (
                               <span className="text-[10px] font-bold text-gray-400 px-2 py-0.5 bg-gray-50 rounded-full uppercase">Basic Member</span>
                            )}
-                           <span className="text-[10px] text-gray-400 font-medium">• {bal.current_points} pts</span>
+                           <span className="text-[10px] text-gray-400 font-medium">• {bal.loyalty_points} pts</span>
                         </div>
                      </div>
                   </div>
                   <div className="text-right">
                      <div className="text-xl font-black text-indigo-600 leading-none">
-                        {bal.current_points}
+                        {bal.loyalty_points}
                         <span className="text-[10px] ml-1 uppercase text-gray-400">pts</span>
                      </div>
                      <p className="text-[10px] text-gray-400 font-medium mt-1">Lifetime: {bal.lifetime_points}</p>

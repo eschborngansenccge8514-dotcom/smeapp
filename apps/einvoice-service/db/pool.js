@@ -1,27 +1,32 @@
 const { Pool } = require('pg');
-require('dotenv').config();
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  host:     process.env.DB_HOST,
+  host:     process.env.DB_HOST     || 'localhost',
   port:     parseInt(process.env.DB_PORT) || 5432,
-  database: process.env.DB_NAME,
-  user:     process.env.DB_USER,
+  database: process.env.DB_NAME     || 'einvoice',
+  user:     process.env.DB_USER     || 'postgres',
   password: process.env.DB_PASSWORD,
-  max:      10,                // max connections in pool
-  idleTimeoutMillis: 30000,
+
+  // Connection pool settings
+  max:             20,   // max concurrent DB connections
+  idleTimeoutMillis:    30000,
   connectionTimeoutMillis: 5000,
-  ssl:      process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  ssl: process.env.DB_SSL === 'true'
+    ? { rejectUnauthorized: false }
+    : false,
 });
 
 pool.on('error', (err) => {
-  console.error('[DB Pool] Unexpected error:', err.message);
+  console.error('[DB] Unexpected pool error:', err.message);
 });
 
 async function ping() {
   const client = await pool.connect();
-  await client.query('SELECT 1');
-  client.release();
+  try {
+    await client.query('SELECT 1');
+  } finally {
+    client.release();
+  }
 }
 
 module.exports = { pool, ping };

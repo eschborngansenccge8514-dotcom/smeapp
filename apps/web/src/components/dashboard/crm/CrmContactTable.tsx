@@ -1,147 +1,334 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { format } from 'date-fns'
+import { useState, useMemo } from 'react'
+import Image from 'next/image'
+import { formatDistanceToNow } from 'date-fns'
 import type { CrmContact } from './types'
-import { CrmContactDrawer } from './CrmContactDrawer'
+
+const SEGMENTS = [
+  { value: 'all',      label: 'All Contacts',  icon: '👥', color: '#6B7280' },
+  { value: 'vip',      label: 'VIP',           icon: '👑', color: '#F59E0B' },
+  { value: 'loyal',    label: 'Loyal',         icon: '💚', color: '#10B981' },
+  { value: 'new',      label: 'New',           icon: '🌟', color: '#3B82F6' },
+  { value: 'at_risk',  label: 'At Risk',       icon: '⚠️', color: '#EF4444' },
+  { value: 'inactive', label: 'Inactive',      icon: '😴', color: '#9CA3AF' },
+]
 
 interface Props {
-  storeId: string
+  contacts: CrmContact[]
+  loading: boolean
   primaryColor: string
+  onSelectContact: (c: CrmContact) => void
+  selectedIds: Set<string>
+  onToggleSelect: (id: string) => void
+  onBulkEmail: (ids: string[]) => void
 }
 
-export function CrmContactTable({ storeId, primaryColor }: Props) {
-  const [contacts, setContacts] = useState<CrmContact[]>([])
-  const [selected, setSelected] = useState<CrmContact | null>(null)
-  const [loading, setLoading]   = useState(true)
-  const [search, setSearch]     = useState('')
-  const supabase = createClient()
+export function CrmContactTable({
+  contacts, loading, primaryColor,
+  onSelectContact, selectedIds, onToggleSelect, onBulkEmail,
+}: Props) {
+  const [segment, setSegment]     = useState('all')
+  const [search, setSearch]       = useState('')
+  const [sortBy, setSortBy]       = useState<'last_order_at' | 'total_spent' | 'total_orders'>('last_order_at')
+  const [sortDir, setSortDir]     = useState<'asc' | 'desc'>('desc')
+  const [page, setPage]           = useState(1)
+  const PAGE_SIZE = 20
 
-  useEffect(() => {
-    async function fetchContacts() {
-      if (!storeId) return
-      let query = supabase
-        .from('crm_contacts')
-        .select('*')
-        .eq('store_id', storeId)
-        .order('last_order_at', { ascending: false })
+  const filtered = useMemo(() => {
+    let result = [...contacts]
+    if (segment !== 'all') result = result.filter((c) => c.segment === segment)
+    if (search) {
+      const q = search.toLowerCase()
+      result = result.filter((c) =>
+        c.full_name.toLowerCase().includes(q) ||
+        c.email?.toLowerCase().includes(q) ||
+        c.phone?.includes(q) ||
+        c.tags?.some((t: string) => t.toLowerCase().includes(q))
+      )
+    }
+    result.sort((a, b) => {
+      const av = a[sortBy] ? new Date(a[sortBy] as string).getTime() : 0
+      const bv = b[sortBy] ? new Date(b[sortBy] as string).getTime() : 0
       
-      if (search) {
-        query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`)
+      // Handle numeric sorting for other fields
+      if (typeof a[sortBy] === 'number') {
+        const nav = (a[sortBy] as number) ?? 0
+        const nbv = (b[sortBy] as number) ?? 0
+        return sortDir === 'desc' ? nbv - nav : nav - nbv
       }
 
-      const { data } = await query
-      if (data) setContacts(data as any)
-      setLoading(false)
-    }
-    fetchContacts()
-  }, [storeId, supabase, search])
+      return sortDir === 'desc'
+        ? (bv > av ? 1 : -1)
+        : (av > bv ? 1 : -1)
+    })
+    return result
+  }, [contacts, segment, search, sortBy, sortDir])
 
-  const Badge = ({ type }: { type: string }) => {
-    const colors: any = {
-      vip:      { bg: '#FEF3C7', text: '#92400E', label: '👑 VIP' },
-      at_risk:  { bg: '#FEE2E2', text: '#991B1B', label: '⚠️ At Risk' },
-      new:      { bg: '#ECFDF5', text: '#065F46', label: '🆕 New' },
-      loyal:    { bg: '#EFF6FF', text: '#1E40AF', label: '💎 Loyal' },
-      inactive: { bg: '#F3F4F6', text: '#374151', label: '💤 Inactive' },
-    }
-    const c = colors[type] || { bg: '#F3F4F6', text: '#374151', label: type }
-    return (
-      <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm border border-white" style={{ backgroundColor: c.bg, color: c.text }}>
-        {c.label}
-      </span>
-    )
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
+
+  function toggleSort(col: typeof sortBy) {
+    if (sortBy === col) setSortDir((d) => d === 'asc' ? 'desc' : 'asc')
+    else { setSortBy(col); setSortDir('desc') }
   }
 
+  const SortIcon = ({ col }: { col: typeof sortBy }) => (
+    <span className={`ml-1 text-xs ${sortBy === col ? 'text-white' : 'text-white/40'}`}>
+      {sortBy === col ? (sortDir === 'desc' ? '↓' : '↑') : '↕'}
+    </span>
+  )
+
   return (
-    <div className="bg-white rounded-[32px] border border-gray-100 shadow-xl overflow-hidden flex flex-col h-[700px]">
-      <div className="px-10 py-8 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
-        <div>
-          <h2 className="text-2xl font-black text-gray-900 tracking-tight">Customer Registry</h2>
-          <p className="text-sm text-gray-500 font-medium">Manage and engage with your store audience.</p>
+    <div className="space-y-4">
+      {/* Segment tabs */}
+      <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
+        {SEGMENTS.map((s) => {
+          const count = s.value === 'all'
+            ? contacts.length
+            : contacts.filter((c) => c.segment === s.value).length
+          const isActive = segment === s.value
+          return (
+            <button
+              key={s.value}
+              onClick={() => { setSegment(s.value); setPage(1) }}
+              className={`shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 text-xs font-bold transition-all ${
+                isActive ? 'text-white border-transparent shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+              }`}
+              style={isActive ? { backgroundColor: primaryColor } : {}}
+            >
+              <span>{s.icon}</span>
+              <span>{s.label}</span>
+              <span className={`rounded-full px-1.5 font-bold ${isActive ? 'bg-white/25 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                {count}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Search + bulk actions */}
+      <div className="flex gap-3 items-center">
+        <div className="relative flex-1">
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+          <input
+            type="text"
+            placeholder="Search name, email, phone, tag…"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-9 py-2.5 text-sm focus:outline-none focus:ring-2 focus:bg-white text-gray-900 placeholder-gray-400"
+            style={{ '--tw-ring-color': primaryColor } as any}
+          />
+          {search && (
+            <button onClick={() => setSearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">✕</button>
+          )}
         </div>
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search customers..."
-              className="w-64 h-12 pl-12 pr-4 bg-white rounded-2xl border-2 border-gray-100 focus:border-opacity-100 transition-all outline-none text-sm font-medium shadow-sm"
-              style={{ '--tw-border-opacity': '1', borderColor: primaryColor + '20' } as any}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <svg className="w-5 h-5 absolute left-4 top-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-          </div>
-          <button className="h-12 px-6 rounded-2xl text-white font-bold text-sm shadow-xl shadow-opacity-20 flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all" style={{ backgroundColor: primaryColor }}>
-             ✨ Export CSV
+        {selectedIds.size > 0 && (
+          <button
+            onClick={() => onBulkEmail([...selectedIds])}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white shadow-sm"
+            style={{ backgroundColor: primaryColor }}
+          >
+            ✉️ Email {selectedIds.size} Selected
           </button>
+        )}
+        <p className="text-xs text-gray-400 shrink-0">
+          {filtered.length} contact{filtered.length !== 1 ? 's' : ''}
+        </p>
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[700px]">
+            <thead>
+              <tr style={{ backgroundColor: primaryColor }}>
+                <th className="px-4 py-3 text-left w-10">
+                  <input
+                    type="checkbox"
+                    className="rounded accent-white"
+                    checked={paginated.length > 0 && paginated.every((c) => selectedIds.has(c.id))}
+                    onChange={() => {
+                      const allSelected = paginated.every((c) => selectedIds.has(c.id))
+                      paginated.forEach((c) => {
+                        if (allSelected) {
+                           if (selectedIds.has(c.id)) onToggleSelect(c.id)
+                        } else {
+                           if (!selectedIds.has(c.id)) onToggleSelect(c.id)
+                        }
+                      })
+                    }}
+                  />
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wide">Customer</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wide">Segment</th>
+                <th
+                  className="px-4 py-3 text-right text-xs font-bold text-white uppercase tracking-wide cursor-pointer hover:text-white/80 select-none"
+                  onClick={() => toggleSort('total_orders')}
+                >
+                  Orders <SortIcon col="total_orders" />
+                </th>
+                <th
+                  className="px-4 py-3 text-right text-xs font-bold text-white uppercase tracking-wide cursor-pointer hover:text-white/80 select-none"
+                  onClick={() => toggleSort('total_spent')}
+                >
+                  Total Spent <SortIcon col="total_spent" />
+                </th>
+                <th
+                  className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wide cursor-pointer hover:text-white/80 select-none"
+                  onClick={() => toggleSort('last_order_at')}
+                >
+                  Last Order <SortIcon col="last_order_at" />
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wide">Tags</th>
+                <th className="px-4 py-3 w-12" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {loading
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="px-4 py-3"><div className="w-4 h-4 bg-gray-200 rounded" /></td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-gray-200 rounded-xl" />
+                          <div className="space-y-1.5">
+                            <div className="h-3 bg-gray-200 rounded w-28" />
+                            <div className="h-2.5 bg-gray-100 rounded w-36" />
+                          </div>
+                        </div>
+                      </td>
+                      {Array.from({ length: 5 }).map((_, j) => (
+                        <td key={j} className="px-4 py-3"><div className="h-3 bg-gray-100 rounded w-16" /></td>
+                      ))}
+                      <td />
+                    </tr>
+                  ))
+                : paginated.map((c) => {
+                    const segInfo = SEGMENTS.find((s) => s.value === c.segment)
+                    return (
+                      <tr
+                        key={c.id}
+                        className={`hover:bg-gray-50/50 transition-colors ${selectedIds.has(c.id) ? 'bg-blue-50/30' : ''}`}
+                      >
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(c.id)}
+                            onChange={() => onToggleSelect(c.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="rounded"
+                            style={{ accentColor: primaryColor }}
+                          />
+                        </td>
+                        <td
+                          className="px-4 py-3 cursor-pointer"
+                          onClick={() => onSelectContact(c)}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div
+                              className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm text-white shrink-0 overflow-hidden"
+                              style={{ backgroundColor: `${primaryColor}CC` }}
+                            >
+                              {c.avatar_url
+                                ? <img src={c.avatar_url} alt={c.full_name} width={36} height={36} className="w-full h-full object-cover" />
+                                : c.full_name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-gray-900 text-sm truncate">{c.full_name}</p>
+                              <p className="text-xs text-gray-400 truncate">{c.email ?? c.phone ?? '—'}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {segInfo && segInfo.value !== 'all' ? (
+                            <span
+                              className="text-xs font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1"
+                              style={{ backgroundColor: `${segInfo.color}15`, color: segInfo.color }}
+                            >
+                              {segInfo.icon} {segInfo.label}
+                            </span>
+                          ) : <span className="text-xs text-gray-400">—</span>}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900">
+                          {c.total_orders}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900">
+                          RM {(c.total_spent ?? 0).toLocaleString('en-MY', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-gray-500">
+                          {c.last_order_at
+                            ? formatDistanceToNow(new Date(c.last_order_at), { addSuffix: true })
+                            : '—'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1">
+                            {(c.tags ?? []).slice(0, 2).map((tag: string) => (
+                              <span key={tag}
+                                className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-md font-medium">
+                                {tag}
+                              </span>
+                            ))}
+                            {(c.tags?.length ?? 0) > 2 && (
+                              <span className="text-xs text-gray-400">+{c.tags!.length - 2}</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={() => onSelectContact(c)}
+                            className="text-gray-400 hover:text-gray-700 transition-colors font-bold text-lg"
+                          >
+                            →
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+            </tbody>
+          </table>
         </div>
-      </div>
 
-      <div className="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar">
-        <table className="w-full text-left border-collapse">
-          <thead className="sticky top-0 bg-white/80 backdrop-blur-md z-10">
-            <tr>
-              <th className="px-10 py-5 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Customer</th>
-              <th className="px-6 py-5 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
-              <th className="px-6 py-5 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Orders</th>
-              <th className="px-6 py-5 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Spent</th>
-              <th className="px-6 py-5 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Last Order</th>
-              <th className="px-10 py-5 text-right text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {loading ? (
-               Array.from({ length: 5 }).map((_, i) => (
-                 <tr key={i} className="animate-pulse">
-                   <td className="px-10 py-6"><div className="flex gap-4 items-center"><div className="w-10 h-10 bg-gray-100 rounded-2xl"/><div className="space-y-2"><div className="h-3 w-32 bg-gray-100 rounded"/><div className="h-2 w-24 bg-gray-50 rounded"/></div></div></td>
-                   <td className="px-6 py-6"><div className="h-6 w-20 bg-gray-100 rounded-full"/></td>
-                   <td className="px-6 py-6"><div className="h-3 w-8 bg-gray-100 rounded"/></td>
-                   <td className="px-6 py-6"><div className="h-3 w-16 bg-gray-100 rounded"/></td>
-                   <td className="px-6 py-6"><div className="h-3 w-28 bg-gray-100 rounded"/></td>
-                   <td className="px-10 py-6 text-right"><div className="h-10 w-24 bg-gray-100 rounded-xl ml-auto"/></td>
-                 </tr>
-               ))
-            ) : contacts.length === 0 ? (
-               <tr><td colSpan={6} className="py-32 text-center text-gray-400 font-medium">No customers found. Keep selling! 📈</td></tr>
-            ) : (
-                contacts.map((c) => (
-                  <tr key={c.id} className="group hover:bg-gray-50/50 transition-all cursor-pointer" onClick={() => setSelected(c)}>
-                    <td className="px-10 py-6">
-                      <div className="flex gap-4 items-center">
-                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-xl shadow-sm border border-gray-100 font-black text-gray-400 group-hover:scale-110 transition-transform">
-                          {c.avatar_url ? <img src={c.avatar_url} className="w-full h-full object-cover rounded-2xl" /> : c.full_name[0]}
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-gray-900 leading-tight group-hover:text-black transition-colors">{c.full_name}</p>
-                          <p className="text-xs text-gray-400 font-medium truncate max-w-[180px]">{c.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-6"><Badge type={c.segment || 'new'} /></td>
-                    <td className="px-6 py-6 text-sm font-bold text-gray-700">{c.total_orders}</td>
-                    <td className="px-6 py-6 text-sm font-black text-gray-900">${Number(c.total_spent).toLocaleString()}</td>
-                    <td className="px-6 py-6 text-xs font-medium text-gray-500">{c.last_order_at ? format(new Date(c.last_order_at), 'MMM dd, h:mm a') : '-'}</td>
-                    <td className="px-10 py-6 text-right">
-                       <button className="px-5 py-2.5 bg-white border-2 border-gray-100 rounded-xl text-xs font-bold text-gray-700 hover:border-gray-200 hover:bg-white hover:shadow-lg transition-all active:scale-95">
-                         View Log
-                       </button>
-                    </td>
-                  </tr>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+            <p className="text-xs text-gray-400">
+              Showing {((page - 1) * PAGE_SIZE) + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+            </p>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="w-8 h-8 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 hover:border-gray-300 text-sm flex items-center justify-center font-bold"
+              >
+                ‹
+              </button>
+              {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
+                const p = i + 1
+                return (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                      page === p ? 'text-white' : 'border border-gray-200 text-gray-600 hover:border-gray-300'
+                    }`}
+                    style={page === p ? { backgroundColor: primaryColor } : {}}
+                  >
+                    {p}
+                  </button>
                 )
-              )
-            )}
-          </tbody>
-        </table>
+              })}
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="w-8 h-8 rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 hover:border-gray-300 text-sm flex items-center justify-center font-bold"
+              >
+                ›
+              </button>
+            </div>
+          </div>
+        )}
       </div>
-
-      {selected && (
-        <CrmContactDrawer
-          contact={selected}
-          primaryColor={primaryColor}
-          onClose={() => setSelected(null)}
-        />
-      )}
     </div>
   )
 }

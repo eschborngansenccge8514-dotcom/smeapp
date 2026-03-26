@@ -2,24 +2,25 @@
 import { useState } from 'react'
 import { useCartStore } from '@/stores/cartStore'
 import { formatPrice } from '@/lib/utils'
-import { Loader2, CreditCard } from 'lucide-react'
+import { Loader2, CreditCard, Landmark, Receipt } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
+import { createSupabaseBrowser } from '@/lib/supabase/client'
 
 const PAYMENT_METHODS = [
-  { code: 'billplz',  label: 'Choose at Billplz',      icon: '💳', desc: 'FPX, e-wallet, credit card' },
-  { code: 'MB2U0227', label: 'Maybank2u',               icon: '🏦', desc: 'FPX Online Banking' },
-  { code: 'BCBB0235', label: 'CIMB Clicks',             icon: '🏦', desc: 'FPX Online Banking' },
-  { code: 'HLB0224',  label: 'Hong Leong Connect',      icon: '🏦', desc: 'FPX Online Banking' },
-  { code: 'PBB0233',  label: 'Public Bank',             icon: '🏦', desc: 'FPX Online Banking' },
-  { code: 'TOUCHNGO', label: 'Touch \'n Go eWallet',   icon: '🟢', desc: 'eWallet' },
-  { code: 'BOOST',    label: 'Boost',                   icon: '🚀', desc: 'eWallet' },
+  { code: 'razorpay', label: 'Cards & E-Wallets',      icon: '💳', desc: 'Visa, Mastercard, TNG, GrabPay' },
+  { code: 'billplz',  label: 'Online Banking (FPX)',   icon: '🏦', desc: 'Choose your bank via Billplz' },
+  { code: 'MB2U0227', label: 'Maybank2u',               icon: '🟡', desc: 'Direct FPX' },
+  { code: 'BCBB0235', label: 'CIMB Clicks',             icon: '🔴', desc: 'Direct FPX' },
 ]
 
 export function PaymentStep({ userId, storeId, state, subtotal, serviceFee, total, items, onBack, store }: any) {
   const { clearCart } = useCartStore()
   const router = useRouter()
-  const [selectedMethod, setSelectedMethod] = useState<string | null>('billplz')
+  const supabase = createSupabaseBrowser()
+  const [selectedMethod, setSelectedMethod] = useState<string | null>(
+    store?.accepts_razorpay ? 'razorpay' : (store?.accepts_billplz ? 'billplz' : 'manual')
+  )
   const [loading, setLoading] = useState(false)
 
   async function placeOrder() {
@@ -52,13 +53,38 @@ export function PaymentStep({ userId, storeId, state, subtotal, serviceFee, tota
       clearCart()
 
       if (selectedMethod === 'manual') {
-        router.push(`/checkout/complete?order_id=${data.orderId}`)
+        router.push(`/checkout/manual-payment?order_id=${data.orderId}`)
         return
       }
 
-      // Redirect to Billplz payment page
-      // Append bank code for direct payment if selected
-      const isDirectBank = selectedMethod && selectedMethod !== 'billplz' && selectedMethod !== 'manual'
+      if (selectedMethod === 'razorpay') {
+        const { data: paymentData, error: fnError } = await supabase.functions.invoke(
+          'create-payment',
+          { body: { orderId: data.orderId } }
+        )
+        if (fnError || paymentData?.error) throw new Error(paymentData?.error ?? fnError?.message)
+
+        const options = {
+          key: paymentData.key_id,
+          order_id: paymentData.razorpay_order_id,
+          amount: paymentData.amount_sen,
+          currency: 'MYR',
+          name: store?.name ?? 'SME App',
+          description: `Order #${data.orderId.slice(0, 8).toUpperCase()}`,
+          handler: async (response: any) => {
+            router.push(`/checkout/complete?order_id=${data.orderId}&paid=1`)
+          },
+          modal: {
+            ondismiss: () => setLoading(false)
+          }
+        }
+        const rzp = new (window as any).Razorpay(options)
+        rzp.open()
+        return
+      }
+
+      // Redirect to Billplz payment page (for billplz or direct FPX)
+      const isDirectBank = selectedMethod && selectedMethod !== 'billplz' && selectedMethod !== 'manual' && selectedMethod !== 'razorpay'
       const billUrl = isDirectBank
         ? `${data.billUrl}?auto_submit=true&bank_code=${selectedMethod}`
         : data.billUrl
@@ -78,7 +104,11 @@ export function PaymentStep({ userId, storeId, state, subtotal, serviceFee, tota
 
       {/* Payment method selector */}
       <div className="space-y-2">
-        {PAYMENT_METHODS.filter(m => (store?.accepts_billplz ?? true) || m.code === 'manual').map((m) => (
+        {PAYMENT_METHODS.filter(m => {
+          if (m.code === 'razorpay') return store?.accepts_razorpay ?? true
+          if (m.code === 'manual') return true
+          return store?.accepts_billplz ?? true
+        }).map((m) => (
           <button key={m.code ?? 'default'}
             onClick={() => setSelectedMethod(m.code)}
             className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 text-left transition-colors

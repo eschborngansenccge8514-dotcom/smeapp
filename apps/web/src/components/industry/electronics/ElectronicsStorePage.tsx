@@ -19,7 +19,7 @@ interface Props {
 
 export function ElectronicsStorePage({ store, products }: Props) {
   const theme   = getIndustryTheme(store.category)
-  const primary = store.brand_primary_color ?? theme.primaryColor
+  const primary = store.primary_color ?? theme.primaryColor
 
   const [activeCategory, setCategory]       = useState('All')
   const [searchQuery, setSearch]            = useState('')

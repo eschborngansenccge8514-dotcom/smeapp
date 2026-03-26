@@ -16,7 +16,7 @@ export function RelatedProducts({
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {products.slice(0, 4).map((p) => (
-          <ProductCard key={p.id} product={p} />
+          <ProductCard key={p.id} product={p} storeSlug={storeId} />
         ))}
       </div>
     </div>

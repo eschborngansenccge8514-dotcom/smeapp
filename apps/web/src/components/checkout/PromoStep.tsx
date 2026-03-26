@@ -35,8 +35,8 @@ export function PromoStep({
   useEffect(() => {
     async function loadLoyalty() {
       const [{ data: bal }, { data: prog }] = await Promise.all([
-        supabase.from('loyalty_balances').select('current_points').eq('user_id', userId).eq('store_id', storeId).single(),
-        supabase.from('loyalty_programs').select('*').eq('store_id', storeId).eq('is_enabled', true).single()
+        supabase.from('store_customers').select('current_points:loyalty_points').eq('user_id', userId).eq('store_id', storeId).maybeSingle(),
+        supabase.from('loyalty_programs').select('*').eq('store_id', storeId).eq('is_enabled', true).maybeSingle()
       ])
       setBalance(bal)
       setProgram(prog)

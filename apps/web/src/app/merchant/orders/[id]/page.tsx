@@ -2,7 +2,7 @@ import { createSupabaseServer } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
 import { StatusBadge } from '@/components/admin/ui/StatusBadge'
-import { Package, User, MapPin, Truck, Calendar, CreditCard } from 'lucide-react'
+import { Package, User, MapPin, Truck, Calendar, CreditCard, Store } from 'lucide-react'
 
 export default async function MerchantOrderDetailPage({
   params,
@@ -107,8 +107,17 @@ export default async function MerchantOrderDetailPage({
             <p className="text-sm text-gray-700 leading-relaxed">{order.delivery_address}</p>
             <div className="mt-4 pt-4 border-t border-gray-50">
               <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Truck size={14} />
-                <span>{order.delivery_type === 'lalamove' ? 'Lalamove' : order.courier_name || 'Standard'}</span>
+                {['self_pickup', 'pickup'].includes(order.delivery_type) ? (
+                  <>
+                    <Store size={14} className="text-green-600" />
+                    <span className="font-medium text-green-700">Self Pickup</span>
+                  </>
+                ) : (
+                  <>
+                    <Truck size={14} />
+                    <span>{order.delivery_type === 'lalamove' ? 'Lalamove' : order.courier_name || 'Standard'}</span>
+                  </>
+                )}
               </div>
               {order.tracking_number && (
                 <p className="mt-1 text-xs font-mono text-indigo-600">Tracking: {order.tracking_number}</p>

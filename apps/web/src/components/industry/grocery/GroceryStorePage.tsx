@@ -20,7 +20,7 @@ interface Props {
 
 export function GroceryStorePage({ store, products, bundles = [] }: Props) {
   const theme = getIndustryTheme(store.category)
-  const primary = store.brand_primary_color ?? theme.primaryColor
+  const primary = store.primary_color ?? theme.primaryColor
 
   const [activeDept, setActiveDept]           = useState('All')
   const [activeSubcat, setActiveSubcat]       = useState('')

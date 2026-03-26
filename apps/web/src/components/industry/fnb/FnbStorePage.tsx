@@ -16,7 +16,7 @@ interface Props {
 
 export function FnbStorePage({ store, products }: Props) {
   const theme = getIndustryTheme(store.category)
-  const primary = store.brand_primary_color ?? theme.primaryColor
+  const primary = store.primary_color ?? theme.primaryColor
   const accent  = theme.accentColor
 
   const [activeCategory, setActiveCategory]   = useState('All')

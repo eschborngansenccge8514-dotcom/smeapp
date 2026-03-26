@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     const {
       storeId, items, address, deliveryType, deliveryFee,
       deliveryQuote, promotionId, discountAmount, notes,
-      subtotal, serviceFee, total, loyaltyPoints, paymentMethod
+      subtotal, serviceFee, total, loyaltyPoints, paymentMethod, paymentProofUrl
     } = await req.json()
 
     // Validate stock for each item
@@ -129,11 +129,12 @@ export async function POST(req: NextRequest) {
     // 5. Handle Payment (Billplz vs Manual)
     if (paymentMethod === 'manual') {
       await admin.from('payments').insert({
-        order_id:    order.id,
-        customer_id: user.id,
-        amount:      total,
-        gateway:     'manual',
-        status:      'pending',
+        order_id:          order.id,
+        customer_id:       user.id,
+        amount:            total,
+        gateway:           'manual',
+        status:            'pending',
+        payment_proof_url: paymentProofUrl || null,
       })
       return NextResponse.json({ orderId: order.id })
     }

@@ -33,7 +33,7 @@ export async function seedProducts(category: string) {
         owner_id: userData.user.id,
         is_active: true,
         approval_status: 'approved',
-        brand_primary_color: '#6366F1'
+        primary_color: '#6366F1'
       })
       .select('id')
       .single()

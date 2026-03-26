@@ -31,14 +31,14 @@ export function Step3Brand({ userId, storeId }: { userId: string; storeId: strin
     // Check subdomain uniqueness
     if (subdomain) {
       const { data: existing } = await supabase
-        .from('stores').select('id').eq('brand_subdomain', subdomain).neq('id', storeId).single()
+        .from('stores').select('id').eq('slug', subdomain).neq('id', storeId).single()
       if (existing) { setError('This subdomain is already taken. Please choose another.'); setLoading(false); return }
     }
 
     const { error: storeErr } = await supabase.from('stores').update({
-      brand_primary_color: primaryColor,
-      brand_subdomain: subdomain.trim() || null,
-      brand_app_name: appName.trim() || null,
+      primary_color: primaryColor,
+      slug: subdomain.trim() || null,
+      app_name: appName.trim() || null,
     }).eq('id', storeId)
 
     if (storeErr) { setError(storeErr.message); setLoading(false); return }

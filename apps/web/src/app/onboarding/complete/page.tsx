@@ -10,7 +10,7 @@ export default async function OnboardingComplete() {
   if (!user) redirect('/merchant-signup')
 
   const { data: store } = await supabase
-    .from('stores').select('name, brand_subdomain, approval_status').eq('owner_id', user.id).single()
+    .from('stores').select('name, slug, approval_status').eq('owner_id', user.id).single()
 
   return (
     <div className="text-center">
@@ -57,10 +57,10 @@ export default async function OnboardingComplete() {
           ))}
         </div>
 
-        {store?.brand_subdomain && (
+        {store?.slug && (
           <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3 mb-6 text-sm text-indigo-700">
             🌐 Your storefront will be live at{' '}
-            <strong>{store.brand_subdomain}.mymarketplace.com</strong>{' '}
+            <strong>{store.slug}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'mymarket.com'}</strong>{' '}
             once approved
           </div>
         )}

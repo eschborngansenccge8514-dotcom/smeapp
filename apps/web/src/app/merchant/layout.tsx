@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createSupabaseServer } from '@/lib/supabase/server'
 import { MerchantSidebar } from '@/components/merchant/MerchantSidebar'
 import { MerchantHeader } from '@/components/merchant/MerchantHeader'
+import { StoreHydrator } from '@/components/merchant/StoreHydrator'
 
 export default async function MerchantLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createSupabaseServer()
@@ -20,7 +21,7 @@ export default async function MerchantLayout({ children }: { children: React.Rea
   // Fetch merchant's store
   const { data: store } = await supabase
     .from('stores')
-    .select('id, name, logo_url, is_active, brand_primary_color')
+    .select('id, name, logo_url, is_active, primary_color')
     .eq('owner_id', user.id)
     .single()
 
@@ -31,6 +32,7 @@ export default async function MerchantLayout({ children }: { children: React.Rea
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
+      <StoreHydrator store={store} />
       {store && <MerchantSidebar store={store} />}
       <div className="flex-1 flex flex-col overflow-hidden">
         {store && <MerchantHeader profile={profile} store={store} />}

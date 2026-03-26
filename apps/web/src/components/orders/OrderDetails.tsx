@@ -1,6 +1,9 @@
 'use client'
 import { formatPrice } from '@/lib/utils'
 import Image from 'next/image'
+import { useState } from 'react'
+import { LeaveReviewModal } from '@/components/account/LeaveReviewModal'
+import { useRouter } from 'next/navigation'
 
 export function OrderDetails({ order }: { order: any }) {
   return (
@@ -36,7 +39,16 @@ export function OrderDetails({ order }: { order: any }) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-gray-900 truncate">{item.products?.name}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{formatPrice(item.unit_price)} each</p>
+                <div className="flex items-center gap-3 mt-0.5">
+                  <p className="text-xs text-gray-400">{formatPrice(item.unit_price)} each</p>
+                  {order.status === 'delivered' && (
+                    <ReviewButton 
+                      item={item} 
+                      storeId={order.store_id} 
+                      orderId={order.id} 
+                    />
+                  )}
+                </div>
               </div>
               <p className="text-sm font-bold text-gray-900">{formatPrice(item.subtotal)}</p>
             </div>
@@ -98,5 +110,35 @@ export function OrderDetails({ order }: { order: any }) {
         </p>
       </div>
     </div>
+  )
+}
+
+function ReviewButton({ item, storeId, orderId }: { item: any, storeId: string, orderId: string }) {
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 uppercase tracking-wider underline underline-offset-2"
+      >
+        Leave a Review
+      </button>
+      <LeaveReviewModal
+        open={open}
+        review={null}
+        onClose={() => setOpen(false)}
+        onSaved={() => {
+          setOpen(false)
+          router.refresh()
+        }}
+        productId={item.product_id}
+        storeId={storeId}
+        orderId={orderId}
+        productName={item.products?.name}
+        productImage={item.products?.image_urls?.[0]}
+      />
+    </>
   )
 }

@@ -1,44 +1,33 @@
 const crypto = require('crypto');
 const forge  = require('node-forge');
 
-// Cert metadata cache: merchantId → cert metadata
 const _certCache = new Map();
 
-/**
- * Load and parse a merchant's .p12 certificate from their DB record.
- * Caches the result in memory to avoid re-parsing on every request.
- */
 function loadCertMeta(merchant) {
   const cached = _certCache.get(merchant.id);
   if (cached) return cached;
 
-  // Sandbox fallback: no cert configured yet
   if (!merchant.cert_p12_base64) {
-    console.warn(
-      `[Signer] Merchant "${merchant.merchant_uid}" has no certificate. Using sandbox placeholder.`
-    );
+    console.warn(`[Signer] Merchant "${merchant.merchant_uid}" has no certificate. Using sandbox placeholder.`);
     const meta = {
       privateKey:   null,
       certificate:  '',
-      issuerName:   merchant.cert_issuer_name   || 'CN=Test, O=Test, C=MY',
-      serialNumber: merchant.cert_serial_number || '00',
+      issuerName:   merchant.cert_issuer_name   || 'CN=LHDN Test Merchant, C=MY, O=Test Org',
+      serialNumber: merchant.cert_serial_number || '01',
       certDigest:   Buffer.alloc(32).toString('base64'),
     };
     _certCache.set(merchant.id, meta);
     return meta;
   }
 
-  // Decode Base64 .p12 from DB
   const pfxBuffer = Buffer.from(merchant.cert_p12_base64, 'base64');
   const p12Asn1   = forge.asn1.fromDer(pfxBuffer.toString('binary'));
   const p12       = forge.pkcs12.pkcs12FromAsn1(p12Asn1, merchant.cert_passphrase || '');
 
-  // Extract private key
   const keyBags = p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag });
   const keyBag  = keyBags[forge.pki.oids.pkcs8ShroudedKeyBag]?.[0];
   const privateKeyPem = keyBag ? forge.pki.privateKeyToPem(keyBag.key) : null;
 
-  // Extract certificate
   const certBags = p12.getBags({ bagType: forge.pki.oids.certBag });
   const certBag  = certBags[forge.pki.oids.certBag]?.[0];
   const cert     = certBag?.cert;
@@ -50,10 +39,7 @@ function loadCertMeta(merchant) {
 
   const certDer    = forge.asn1.toDer(forge.pki.certificateToAsn1(cert)).getBytes();
   const certBase64 = Buffer.from(certDer, 'binary').toString('base64');
-  const certDigest = crypto
-    .createHash('sha256')
-    .update(Buffer.from(certDer, 'binary'))
-    .digest('base64');
+  const certDigest = crypto.createHash('sha256').update(Buffer.from(certDer, 'binary')).digest('base64');
 
   const meta = {
     privateKey:   privateKeyPem,
@@ -64,37 +50,25 @@ function loadCertMeta(merchant) {
   };
 
   _certCache.set(merchant.id, meta);
-  console.log(`[Signer] Certificate loaded for merchant: ${merchant.merchant_uid}`);
   return meta;
 }
 
-/**
- * Invalidate cert cache
- */
-function invalidateCertCache(merchantId) {
-  _certCache.delete(merchantId);
-}
-
-// ─── Hashing ──────────────────────────────────────────────────────────────
+function invalidateCertCache(merchantId) { _certCache.delete(merchantId); }
 
 function hashDocument(invoiceObj) {
+  // Hash the MINIFIED JSON of the prefix-less document
   const minified  = JSON.stringify(invoiceObj);
+  const docDigest = crypto.createHash('sha256').update(minified, 'utf8').digest('base64');
   const hexHash   = crypto.createHash('sha256').update(minified, 'utf8').digest('hex');
-  const docDigest = Buffer.from(hexHash).toString('base64');
   return { minified, hexHash, docDigest };
 }
 
 function signHex(hexHash, privateKeyPem, merchantUid) {
-  if (!privateKeyPem) {
-    console.warn(`[Signer] No private key for merchant "${merchantUid}" — sandbox placeholder.`);
-    return 'SANDBOX_PLACEHOLDER_SIGNATURE';
-  }
-  return crypto
-    .sign('RSA-SHA256', Buffer.from(hexHash), {
-      key:     privateKeyPem,
-      padding: crypto.constants.RSA_PKCS1_PADDING,
-    })
-    .toString('base64');
+  if (!privateKeyPem) return 'SANDBOX_PLACEHOLDER_SIGNATURE';
+  return crypto.sign('RSA-SHA256', Buffer.from(hexHash), {
+    key:     privateKeyPem,
+    padding: crypto.constants.RSA_PKCS1_PADDING,
+  }).toString('base64');
 }
 
 function buildSignedPropsXml(signingTime, certDigest, issuerName, serialNumber) {
@@ -125,33 +99,35 @@ function injectSignatureBlock(invoiceObj, {
       UBLExtension: [{
         ExtensionURI: [{ _: 'urn:oasis:names:specification:ubl:dsig:enveloped:xades' }],
         ExtensionContent: [{
-          'sig:UBLDocumentSignatures': [{
-            'xmlns:sig': 'urn:oasis:names:specification:ubl:schema:xsd:CommonSignatureComponents-2',
-            'xmlns:sac': 'urn:oasis:names:specification:ubl:schema:xsd:SignatureAggregateComponents-2',
-            'xmlns:sbc': 'urn:oasis:names:specification:ubl:schema:xsd:SignatureBasicComponents-2',
-            'sac:SignatureInformation': [{
-              'cbc:ID': [{ _: 'urn:oasis:names:specification:ubl:signature:1' }],
-              'sbc:ReferencedSignatureID': [{ _: 'urn:oasis:names:specification:ubl:signature:Invoice' }],
+          UBLDocumentSignatures: [{
+            SignatureInformation: [{
+              ID: [{ _: 'urn:oasis:names:specification:ubl:signature:1' }],
+              ReferencedSignatureID: [{ _: 'urn:oasis:names:specification:ubl:signature:Invoice' }],
               'ds:Signature': [{
                 'xmlns:ds': 'http://www.w3.org/2000/09/xmldsig#',
                 Id: 'id-doc-signed-data',
-                'ds:SignedInfo': [{
-                  'ds:CanonicalizationMethod': [{ Algorithm: 'http://www.w3.org/2006/12/xml-c14n11' }],
-                  'ds:SignatureMethod': [{ Algorithm: 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256' }],
-                  'ds:Reference': [
-                    {
-                      Id: 'id-doc-signed-data', URI: '',
-                      'ds:DigestMethod': [{ Algorithm: 'http://www.w3.org/2001/04/xmlenc#sha256' }],
-                      'ds:DigestValue': [{ _: docDigest }],
-                    },
-                    {
-                      URI: '#id-xades-signed-props',
-                      Type: 'http://uri.etsi.org/01903#SignedProperties',
-                      'ds:DigestMethod': [{ Algorithm: 'http://www.w3.org/2001/04/xmlenc#sha256' }],
-                      'ds:DigestValue': [{ _: propsDigest }],
-                    },
-                  ],
-                }],
+                'ds:SignedInfo': [
+                  {
+                    'ds:CanonicalizationMethod': [{ Algorithm: 'http://www.w3.org/2006/12/xml-c14n11' }],
+                    'ds:SignatureMethod': [{ Algorithm: 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256' }],
+                    'ds:Reference': [
+                      {
+                        Id: 'id-doc-signed-data', URI: '',
+                        'ds:Transforms': [{
+                          'ds:Transform': [{ Algorithm: 'http://www.w3.org/2000/09/xmldsig#enveloped-signature' }]
+                        }],
+                        'ds:DigestMethod': [{ Algorithm: 'http://www.w3.org/2001/04/xmlenc#sha256' }],
+                        'ds:DigestValue': [{ _: docDigest }],
+                      },
+                      {
+                        URI: '#id-xades-signed-props',
+                        Type: 'http://uri.etsi.org/01903#SignedProperties',
+                        'ds:DigestMethod': [{ Algorithm: 'http://www.w3.org/2001/04/xmlenc#sha256' }],
+                        'ds:DigestValue': [{ _: propsDigest }],
+                      },
+                    ],
+                  },
+                ],
                 'ds:SignatureValue': [{ _: signatureValue }],
                 'ds:KeyInfo': [{ 'ds:X509Data': [{ 'ds:X509Certificate': [{ _: certificate }] }] }],
                 'ds:Object': [{
@@ -190,27 +166,22 @@ function injectSignatureBlock(invoiceObj, {
     }],
   };
 
+  // Get the key (Invoice, CreditNote, etc.)
+  const type = Object.keys(invoiceObj)[0];
   return {
-    ...invoiceObj,
-    Invoice: invoiceObj.Invoice.map(inv => ({ ...block, ...inv })),
+    [type]: invoiceObj[type].map(inv => ({ ...block, ...inv })),
   };
 }
 
-/**
- * Full 8-step signing for a specific merchant
- */
 function signDocument(invoiceObj, merchant) {
   const cert        = loadCertMeta(merchant);
   const signingTime = new Date().toISOString();
   const { hexHash, docDigest } = hashDocument(invoiceObj);
   const signatureValue = signHex(hexHash, cert.privateKey, merchant.merchant_uid);
-  const signedPropsXml = buildSignedPropsXml(
-    signingTime, cert.certDigest, cert.issuerName, cert.serialNumber
-  );
-  const propsDigest = crypto
-    .createHash('sha256').update(signedPropsXml, 'utf8').digest('base64');
+  const signedPropsXml = buildSignedPropsXml(signingTime, cert.certDigest, cert.issuerName, cert.serialNumber);
+  const propsDigest = crypto.createHash('sha256').update(signedPropsXml, 'utf8').digest('base64');
 
-  const { signedInvoice } = injectSignatureBlock(invoiceObj, {
+  const signedInvoice = injectSignatureBlock(invoiceObj, {
     docDigest, propsDigest, signatureValue,
     certDigest:   cert.certDigest,
     issuerName:   cert.issuerName,

@@ -1,6 +1,16 @@
 import { Resend } from 'resend'
 
-export const resend = new Resend(process.env.RESEND_API_KEY)
+let resendInstance: Resend | null = null
+
+export function getResend() {
+  if (!resendInstance) {
+    if (!process.env.RESEND_API_KEY) {
+      console.warn('RESEND_API_KEY is missing')
+    }
+    resendInstance = new Resend(process.env.RESEND_API_KEY || 're_dummy_key')
+  }
+  return resendInstance
+}
 
 export interface SendCampaignOptions {
   fromName: string
@@ -24,10 +34,11 @@ export async function sendEmailCampaign({
         (html, [key, val]) => html.replaceAll(`{{${key}}}`, val),
         bodyHtml
       )
-      const { data, error } = await resend.emails.send({
+      const resendInstance = getResend()
+      const { data, error } = await resendInstance.emails.send({
         from: `${fromName} <${fromEmail}>`,
         to: [r.email],
-        reply_to: replyTo,
+        replyTo: replyTo,
         subject,
         html: personalised,
         text: bodyText,

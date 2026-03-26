@@ -12,6 +12,11 @@ const ADVANCE_LABELS: Record<string, string> = {
   dispatched: 'Mark Delivered',
 }
 
+const PICKUP_ADVANCE_LABELS: Record<string, string> = {
+  ...ADVANCE_LABELS,
+  ready: 'Mark Picked Up',
+}
+
 export function OrderCard({
   order, onAdvance, onCancel
 }: { order: any; onAdvance: () => void; onCancel: (reason: string) => void }) {
@@ -43,6 +48,8 @@ export function OrderCard({
 
       {order.delivery_type === 'lalamove' ? (
         <p className="text-xs text-purple-600 mb-2">🛵 Lalamove delivery</p>
+      ) : ['self_pickup', 'pickup'].includes(order.delivery_type) ? (
+        <p className="text-xs text-green-600 mb-2">🏪 Self Pickup</p>
       ) : (
         <p className="text-xs text-blue-600 mb-2">📦 {order.courier_name ?? 'EasyParcel'}</p>
       )}
@@ -58,7 +65,10 @@ export function OrderCard({
           onClick={onAdvance}
           className="flex-1 bg-indigo-600 text-white py-1.5 rounded-lg text-xs font-semibold hover:bg-indigo-700"
         >
-          {ADVANCE_LABELS[order.status] ?? 'Advance'}
+          {['self_pickup', 'pickup'].includes(order.delivery_type)
+            ? (PICKUP_ADVANCE_LABELS[order.status] ?? 'Advance')
+            : (ADVANCE_LABELS[order.status] ?? 'Advance')
+          }
         </button>
         <Link href={`/merchant/orders/${order.id}`}
           className="p-1.5 bg-gray-100 rounded-lg text-gray-500 hover:bg-gray-200">

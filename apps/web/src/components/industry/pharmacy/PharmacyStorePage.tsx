@@ -35,7 +35,7 @@ const RX_FILTER_OPTIONS = [
 
 export function PharmacyStorePage({ store, products }: Props) {
   const theme = getIndustryTheme(store.category)
-  const primary = store.brand_primary_color ?? theme.primaryColor
+  const primary = store.primary_color ?? theme.primaryColor
 
   const [searchQuery, setSearchQuery]         = useState('')
   const [activeCategory, setActiveCategory]   = useState('All')

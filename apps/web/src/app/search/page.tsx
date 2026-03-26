@@ -42,7 +42,7 @@ export default async function SearchPage({ searchParams }: Props) {
       </form>
 
       <ProductFilters categories={categories ?? []} totalCount={products?.length ?? 0} />
-      <ProductGrid products={products ?? []} showStore cols={4} />
+      <ProductGrid products={products ?? []} cols={4} />
     </div>
   )
 }

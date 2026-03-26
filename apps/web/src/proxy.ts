@@ -1,6 +1,13 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 
+// Routes that are publicly cacheable at the CDN edge
+const CACHEABLE_ROUTES = [
+  /^\/stores\/[^/]+$/,           // /stores/[slug]
+  /^\/stores\/[^/]+\/products$/, // /stores/[slug]/products
+  /^\/$/, // home page
+]
+
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -59,7 +66,50 @@ export async function proxy(request: NextRequest) {
     const slug = hostname.replace(`.${rootDomain}`, '')
     const url = request.nextUrl.clone()
     url.pathname = `/tenant/${slug}${request.nextUrl.pathname}`
-    return NextResponse.rewrite(url)
+    supabaseResponse = NextResponse.rewrite(url)
+  }
+
+  // ── Security headers ────────────────────────────────────────────────────
+  supabaseResponse.headers.set('X-Frame-Options', 'SAMEORIGIN')
+  supabaseResponse.headers.set('X-Content-Type-Options', 'nosniff')
+  supabaseResponse.headers.set(
+    'Strict-Transport-Security',
+    'max-age=31536000; includeSubDomains; preload'
+  )
+  supabaseResponse.headers.set(
+    'Content-Security-Policy',
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com https://images.unsplash.com",
+      "font-src 'self'",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.resend.com https://*.upstash.io",
+      "frame-src 'none'",
+    ].join('; ')
+  )
+
+  // ── CDN cache hints for public pages ───────────────────────────────────
+  const isCacheable = CACHEABLE_ROUTES.some((r) => r.test(pathname))
+  if (isCacheable) {
+    supabaseResponse.headers.set(
+      'Cache-Control',
+      'public, s-maxage=60, stale-while-revalidate=600'
+    )
+  }
+
+  // ── Resource hints (preconnect to external origins) ────────────────────
+  if (pathname === '/') {
+    supabaseResponse.headers.append(
+      'Link',
+      '<https://fonts.gstatic.com>; rel=preconnect; crossorigin'
+    )
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      supabaseResponse.headers.append(
+        'Link',
+        `<${process.env.NEXT_PUBLIC_SUPABASE_URL}>; rel=preconnect`
+      )
+    }
   }
 
   return supabaseResponse

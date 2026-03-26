@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ProductCard } from '@/components/ProductCard'
+import { ProductCard } from '@/components/products/ProductCard'
 
 export default async function TenantStorePage({ params: paramsPromise }: { params: Promise<{ slug: string }> }) {
   const params = await paramsPromise
@@ -9,7 +10,7 @@ export default async function TenantStorePage({ params: paramsPromise }: { param
   const { data: store } = await supabase
     .from('stores')
     .select('*')
-    .or(`brand_subdomain.eq.${params.slug},brand_custom_domain.eq.${params.slug}`)
+    .or(`slug.eq.${params.slug},custom_domain.eq.${params.slug}`)
     .eq('is_active', true)
     .single()
 
@@ -22,28 +23,29 @@ export default async function TenantStorePage({ params: paramsPromise }: { param
     .eq('is_available', true)
     .order('name')
 
-  const primary = store.brand_primary_color ?? '#6366F1'
-
   return (
     <main className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-10" style={{ borderBottomColor: primary }}>
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <span className="font-bold text-xl" style={{ color: primary }}>{store.brand_app_name ?? store.name}</span>
-          <a href={`/tenant/${params.slug}/cart`} className="text-gray-600 hover:opacity-80">Cart</a>
-        </div>
-      </nav>
-
-      <div className="py-10" style={{ background: `linear-gradient(135deg, ${primary}22, transparent)` }}>
-        <div className="max-w-6xl mx-auto px-4 text-center py-6">
-          <h1 className="text-4xl font-bold" style={{ color: primary }}>{store.name}</h1>
-          {store.description && <p className="text-gray-500 mt-2 text-lg">{store.description}</p>}
+      <div className="py-16 bg-[var(--store-primary-10)]">
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <h1 className="text-5xl font-extrabold text-gray-900 tracking-tight">
+            {store.name}
+          </h1>
+          {store.description && (
+            <p className="text-gray-500 mt-4 text-xl max-w-2xl mx-auto">
+              {store.description}
+            </p>
+          )}
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {products?.map((product) => (
-            <ProductCard key={product.id} product={product} storeId={store.id} storeName={store.name} />
+            <ProductCard
+              key={product.id}
+              product={product as any}
+              storeSlug={params.slug}
+            />
           ))}
         </div>
       </div>

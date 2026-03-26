@@ -1,160 +1,140 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { useCartStore } from '@/stores/cartStore'
-import { AddressStep } from './AddressStep'
-import { DeliveryStep } from './DeliveryStep'
-import { PromoStep } from './PromoStep'
-import { PaymentStep } from './PaymentStep'
-import { OrderSummary } from './OrderSummary'
+import { useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useRouter } from 'next/navigation'
+import { useUrlState } from '@/lib/url-state'
+import { calcOrderTotals } from '@/lib/fees'
+import { CartStep }     from './steps/CartStep'
+import { DeliveryStep } from './steps/DeliveryStep'
+import { PaymentStep }  from './steps/PaymentStep'
+import { ReviewStep }   from './steps/ReviewStep'
+import { ConfirmationStep } from './steps/ConfirmationStep'
+import { slideInRight } from '@/components/ui/animations'
+import type { CheckoutStep, CheckoutState, FeeConfig } from '@/types/customer'
 
-export type CheckoutState = {
-  address: any | null
-  deliveryType: 'lalamove' | 'easyparcel' | 'self_pickup'
-  deliveryFee: number
-  deliveryQuote: any | null
-  promoCode: string
-  discountAmount: number
-  promotionId: string | null
-  notes: string
-  loyaltyPoints: number
-  loyaltyDiscount: number
+const STEPS: { key: CheckoutStep; label: string; icon: string }[] = [
+  { key: 'cart',         label: 'Cart',     icon: '🛒' },
+  { key: 'delivery',     label: 'Delivery', icon: '📦' },
+  { key: 'payment',      label: 'Payment',  icon: '💳' },
+  { key: 'review',       label: 'Review',   icon: '✅' },
+  { key: 'confirmation', label: 'Done',     icon: '🎉' },
+]
+
+interface Props {
+  feeConfig: FeeConfig
 }
 
-const STEPS = ['Address', 'Delivery', 'Promo & Notes', 'Payment']
+export function CheckoutFlow({ feeConfig }: Props) {
+  const router = useRouter()
+  const { getParam, setParam } = useUrlState()
 
-export function CheckoutFlow({ addresses, profile, userId }: any) {
-  const { items, storeId, storeName, getTotal } = useCartStore()
-  const [store, setStore] = useState<any>(null)
-  const [step, setStep] = useState(0)
-  const [state, setState] = useState<CheckoutState>({
-    address: addresses.find((a: any) => a.is_default) ?? addresses[0] ?? null,
-    deliveryType: 'lalamove',
-    deliveryFee: 0,
-    deliveryQuote: null,
-    promoCode: '',
-    discountAmount: 0,
-    promotionId: null,
-    notes: '',
-    loyaltyPoints: 0,
-    loyaltyDiscount: 0,
-  })
+  const currentStep = (getParam('step', 'cart') as CheckoutStep)
+  const currentIdx  = STEPS.findIndex((s) => s.key === currentStep)
 
-  const [mounted, setMounted] = useState(false)
+  // Demo values — in a real app, these come from a cart store (Zustand)
+  const subtotal = 45.00
+  const deliveryFee = 5.00
+  const discount = 0.00
 
-  useEffect(() => {
-    setMounted(true)
-    if (storeId) {
-      fetchStoreSettings()
-    }
-  }, [storeId])
+  const totals = useMemo(
+    () => calcOrderTotals(subtotal, deliveryFee, discount, feeConfig),
+    [subtotal, deliveryFee, discount, feeConfig]
+  )
 
-  async function fetchStoreSettings() {
-    const res = await fetch(`/api/store/${storeId}`)
-    const data = await res.json()
-    if (data.store) {
-      setStore(data.store)
-    }
+  function goToStep(step: CheckoutStep) {
+    setParam('step', step, { scroll: true })
   }
 
-  function update(key: keyof CheckoutState, value: any) {
-    setState((s) => ({ ...s, [key]: value }))
+  function goNext() {
+    const next = STEPS[currentIdx + 1]
+    if (next) goToStep(next.key)
   }
 
-  const subtotal     = getTotal()
-  const serviceFee   = Math.round(subtotal * 0.02 * 100) / 100
-  const total        = subtotal + state.deliveryFee + serviceFee - state.discountAmount - state.loyaltyDiscount
+  function goPrev() {
+    if (currentIdx > 0) router.back()
+  }
 
-  if (!mounted) return null
+  const progressPct = ((currentIdx) / (STEPS.length - 1)) * 100
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Left: Steps */}
-      <div className="lg:col-span-2 space-y-1">
-        {/* Stepper */}
-        <div className="flex items-center mb-6">
-          {STEPS.map((label, i) => (
-            <div key={i} className="flex-1 flex items-center">
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-20">
+        <div className="max-w-2xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between mb-3">
+            {currentStep !== 'confirmation' && (
               <button
-                onClick={() => i < step && setStep(i)}
-                className={`flex items-center gap-2 text-sm font-medium
-                  ${i === step ? 'text-indigo-700' : i < step ? 'text-green-600 cursor-pointer' : 'text-gray-400 cursor-default'}`}
+                onClick={goPrev}
+                disabled={currentIdx === 0}
+                className="text-sm font-semibold text-gray-500 hover:text-gray-700 disabled:opacity-30 flex items-center gap-1 transition-colors"
               >
-                <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold
-                  ${i === step ? 'bg-indigo-600 text-white'
-                    : i < step ? 'bg-green-500 text-white'
-                    : 'bg-gray-100 text-gray-400'}`}>
-                  {i < step ? '✓' : i + 1}
-                </span>
-                <span className="hidden md:block">{label}</span>
+                ← Back
               </button>
-              {i < STEPS.length - 1 && (
-                <div className={`flex-1 h-0.5 mx-2 ${i < step ? 'bg-green-400' : 'bg-gray-200'}`} />
-              )}
-            </div>
-          ))}
-        </div>
+            )}
+            <p className="text-sm font-bold text-gray-900 mx-auto">Checkout</p>
+            {currentStep !== 'confirmation' && (
+              <p className="text-xs text-gray-400">
+                {currentIdx + 1} / {STEPS.length - 1}
+              </p>
+            )}
+          </div>
 
-        {step === 0 && (
-          <AddressStep
-            addresses={addresses} selected={state.address}
-            onSelect={(a: any) => update('address', a)}
-            onNext={() => setStep(1)}
-            userId={userId}
-          />
-        )}
-        {step === 1 && (
-          <DeliveryStep
-            address={state.address} storeId={storeId!}
-            deliveryType={state.deliveryType} quote={state.deliveryQuote}
-            cartSubtotal={subtotal}
-            onUpdate={(type: any, fee: any, quote: any) => {
-              update('deliveryType', type)
-              update('deliveryFee', fee)
-              update('deliveryQuote', quote)
-            }}
-            onNext={() => setStep(2)}
-            onBack={() => setStep(0)}
-          />
-        )}
-        {step === 2 && (
-          <PromoStep
-            storeId={storeId!} userId={userId} subtotal={subtotal}
-            promoCode={state.promoCode} discountAmount={state.discountAmount}
-            loyaltyPoints={state.loyaltyPoints} loyaltyDiscount={state.loyaltyDiscount}
-            notes={state.notes}
-            onPromo={(code: any, amount: any, id: any) => {
-              update('promoCode', code)
-              update('discountAmount', amount)
-              update('promotionId', id)
-            }}
-            onLoyalty={(points: number, discount: number) => {
-              update('loyaltyPoints', points)
-              update('loyaltyDiscount', discount)
-            }}
-            onNotes={(n: any) => update('notes', n)}
-            onNext={() => setStep(3)}
-            onBack={() => setStep(1)}
-          />
-        )}
-        {step === 3 && (
-          <PaymentStep
-            userId={userId} storeId={storeId!} state={state}
-            subtotal={subtotal} serviceFee={serviceFee} total={total}
-            items={items} store={store}
-            onBack={() => setStep(2)}
-          />
-        )}
+          <div className="flex justify-between mb-2">
+            {STEPS.filter((s) => s.key !== 'confirmation').map((s, i) => (
+              <button
+                key={s.key}
+                onClick={() => i < currentIdx && goToStep(s.key)}
+                disabled={i >= currentIdx}
+                className={`flex flex-col items-center gap-1 transition-all ${
+                  i <= currentIdx ? 'opacity-100' : 'opacity-30'
+                }`}
+              >
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all ${
+                    s.key === currentStep
+                      ? 'bg-indigo-600 border-indigo-600 text-white scale-110 shadow-md'
+                      : i < currentIdx
+                      ? 'bg-green-500 border-green-500 text-white'
+                      : 'bg-white border-gray-200 text-gray-400'
+                  }`}
+                >
+                  {i < currentIdx ? '✓' : s.icon}
+                </div>
+                <span className={`text-xs font-semibold hidden sm:block ${
+                  s.key === currentStep ? 'text-indigo-600' : i < currentIdx ? 'text-green-600' : 'text-gray-400'
+                }`}>
+                  {s.label}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-indigo-600 rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${progressPct}%` }}
+              transition={{ duration: 0.4, ease: 'easeInOut' }}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Right: Order Summary */}
-      <div className="hidden lg:block">
-        <OrderSummary
-          items={items} storeName={storeName}
-          subtotal={subtotal} deliveryFee={state.deliveryFee}
-          serviceFee={serviceFee} discount={state.discountAmount}
-          loyaltyDiscount={state.loyaltyDiscount}
-          total={total}
-        />
+      <div className="max-w-2xl mx-auto px-4 py-6">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentStep}
+            variants={slideInRight}
+            initial="hidden"
+            animate="visible"
+            exit={{ opacity: 0, x: -24, transition: { duration: 0.2 } }}
+          >
+            {currentStep === 'cart'         && <CartStep onNext={goNext} totals={totals} feeConfig={feeConfig} />}
+            {currentStep === 'delivery'     && <DeliveryStep onNext={goNext} totals={totals} feeConfig={feeConfig} />}
+            {currentStep === 'payment'      && <PaymentStep onNext={goNext} totals={totals} />}
+            {currentStep === 'review'       && <ReviewStep onNext={goNext} totals={totals} feeConfig={feeConfig} />}
+            {currentStep === 'confirmation' && <ConfirmationStep />}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   )

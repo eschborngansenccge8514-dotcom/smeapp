@@ -69,7 +69,7 @@ export function NotificationPanel({
             </button>
           )}
           <button
-            onClick={() => { router.push('/dashboard/notifications'); onClose() }}
+            onClick={() => { router.push('/merchant/notifications'); onClose() }}
             className="text-xs text-gray-400 hover:text-gray-600 font-semibold"
           >
             See all →

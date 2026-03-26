@@ -70,7 +70,7 @@ export interface FnbStore {
   cover_image_url: string | null
   address: string | null
   category: string | null
-  brand_primary_color: string | null
+  primary_color: string | null
   operating_hours: OperatingHours | null
   is_halal_certified?: boolean
   rating?: number

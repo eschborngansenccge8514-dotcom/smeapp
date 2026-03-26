@@ -23,7 +23,7 @@ export default async function CheckoutCompletePage({ searchParams }: Props) {
   const billplzPaid = billplzParams['billplz[paid]'] ?? billplzParams['billplz_paid']
   const hasSignature = 'x_signature' in billplzParams
   const isValid = hasSignature && verifyXSignature(billplzParams)
-  const isPaid  = isValid && billplzPaid === 'true'
+  const isPaid  = (isValid && billplzPaid === 'true') || params['paid'] === '1'
 
   if (!order_id) redirect('/')
 
@@ -49,7 +49,7 @@ export default async function CheckoutCompletePage({ searchParams }: Props) {
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Order Placed! 🎉</h1>
         <p className="text-gray-500 mb-1">
-          {isManualPayment ? 'Please complete your manual payment' : 'Your payment was successful'}
+          {params['manual'] === '1' ? 'Your payment proof has been submitted' : (isManualPayment ? 'Please complete your manual payment' : 'Your payment was successful')}
         </p>
         <p className="text-sm text-gray-400 mb-6">Order #{order_id.slice(0, 8).toUpperCase()}</p>
 

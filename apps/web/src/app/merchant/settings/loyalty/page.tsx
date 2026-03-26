@@ -28,7 +28,7 @@ export default async function LoyaltySettingsPage() {
     .from('loyalty_programs')
     .select('*')
     .eq('store_id', store.id)
-    .single()
+    .maybeSingle()
 
   if (!program) {
     // We can either create it here or handle it in the form

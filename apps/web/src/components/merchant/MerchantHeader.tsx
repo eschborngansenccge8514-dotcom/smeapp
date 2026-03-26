@@ -31,7 +31,7 @@ export function MerchantHeader({ profile, store }: { profile: any; store: any })
       <div className="flex items-center gap-4">
         <NotificationBell 
           storeId={store.id} 
-          primaryColor={store.brand_primary_color || '#6366F1'} 
+          primaryColor={store.primary_color || '#6366F1'} 
         />
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center">

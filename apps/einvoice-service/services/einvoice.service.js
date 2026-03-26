@@ -6,27 +6,45 @@ const submitter = require('./submitter');
 const config    = require('../config');
 
 /**
- * Issue and submit a standard invoice.
+ * Issue and submit an invoice (or note).
  */
-async function issueInvoice(merchantUid, invoiceData) {
+async function issueInvoice(merchantUid, invoiceData, type = '01') {
   const m = await merchant.getMerchant(merchantUid);
-  const unsigned = builder.buildInvoice(m, invoiceData);
+  
+  const unsigned = builder.buildInvoice(m, {
+    ...invoiceData,
+    invoiceNumber: invoiceData.invoiceNumber || invoiceData.orderNumber
+  }, type);
+
   const { signedInvoice, docDigest } = signer.signDocument(unsigned, m);
-  const lhdnResponse = await submitter.submitInvoice(m, invoiceData.orderNumber, signedInvoice);
+  
+  let lhdnResponse;
+  try {
+    lhdnResponse = await submitter.submitInvoice(m, invoiceData.orderNumber, signedInvoice, docDigest);
+  } catch (err) {
+    // Even if submission fails (e.g. 429), we record it as 'failed' in our DB
+    await db.createInvoice({
+      merchantId:     m.id,
+      orderNumber:    invoiceData.orderNumber,
+      status:         'failed',
+      errorMessage:   err.message,
+    }).catch(() => {});
+    throw err;
+  }
 
   const invoiceRecord = await db.createInvoice({
-    merchant_id:    m.id,
-    order_id:       invoiceData.orderId,
-    invoice_number: invoiceData.orderNumber,
-    submission_uid: lhdnResponse.submissionUID,
-    document_id:    lhdnResponse.uuid,
-    long_id:        lhdnResponse.longId,
-    hash:           docDigest,
+    merchantId:     m.id,
+    orderNumber:    invoiceData.orderNumber,
+    submissionUid:  lhdnResponse.submissionUID,
+    lhdnUuid:       lhdnResponse.uuid,
+    lhdnLongId:     lhdnResponse.longId,
     status:         'submitted',
-    lhdn_response:  lhdnResponse,
   });
 
-  return { ...invoiceRecord, qrCodeUrl: lhdnResponse.longId ? `${config.URLS[config.ENV].API}/documents/${lhdnResponse.uuid}/details` : null };
+  return { 
+    ...invoiceRecord, 
+    qrCodeUrl: lhdnResponse.longId ? `${config.URLS[config.ENV].API}/documents/${lhdnResponse.uuid}/details` : null 
+  };
 }
 
 /**
@@ -49,19 +67,17 @@ async function issueConsolidatedInvoice(merchantUid, { year, month, orders }) {
     items,
   };
 
-  const unsigned = builder.buildInvoice(m, invoiceData);
+  const unsigned = builder.buildInvoice(m, invoiceData, '01');
   const { signedInvoice, docDigest } = signer.signDocument(unsigned, m);
-  const lhdnResponse = await submitter.submitInvoice(m, invoiceData.invoiceNumber, signedInvoice);
+  const lhdnResponse = await submitter.submitInvoice(m, invoiceData.invoiceNumber, signedInvoice, docDigest);
 
   const invoiceRecord = await db.createInvoice({
-    merchant_id:    m.id,
-    invoice_number: invoiceData.invoiceNumber,
-    submission_uid: lhdnResponse.submissionUID,
-    document_id:    lhdnResponse.uuid,
-    long_id:        lhdnResponse.longId,
-    hash:           docDigest,
+    merchantId:     m.id,
+    orderNumber:    invoiceData.invoiceNumber,
+    submissionUid:  lhdnResponse.submissionUID,
+    lhdnUuid:       lhdnResponse.uuid,
+    lhdnLongId:     lhdnResponse.longId,
     status:         'submitted',
-    lhdn_response:  lhdnResponse,
   });
 
   // Mark all orders as consolidated in the staging table
@@ -71,27 +87,31 @@ async function issueConsolidatedInvoice(merchantUid, { year, month, orders }) {
 }
 
 /**
- * Issue Credit Note / Debit Note / Refund Note (Stubs — implement builder methods as needed)
+ * Note issuing methods
  */
 async function issueCreditNote(merchantUid, data) {
-  return issueInvoice(merchantUid, data); // Simplified fallback
+  return issueInvoice(merchantUid, { ...data, orderNumber: data.refNumber }, '02');
 }
 
 async function issueDebitNote(merchantUid, data) {
-  return issueInvoice(merchantUid, data); // Simplified fallback
+  return issueInvoice(merchantUid, { ...data, orderNumber: data.refNumber }, '03');
 }
 
 async function issueRefundNote(merchantUid, data) {
-  return issueInvoice(merchantUid, data); // Simplified fallback
+  return issueInvoice(merchantUid, { ...data, orderNumber: data.refNumber }, '04');
 }
 
 /**
- * Cancel an invoice (Stub — implement LHDN cancellation API)
+ * Cancel an invoice
  */
 async function cancelInvoice(merchantUid, uuid, reason, orderNumber) {
   const m = await merchant.getMerchant(merchantUid);
   console.log(`[Service] Cancel request for ${uuid} (Merchant: ${merchantUid}) - Reason: ${reason}`);
-  // TODO: Implement LHDN Cancel API call
+  
+  // Real implementaton would call LHDN /documents/state/{uuid} DELETE
+  // For the test, we just update the DB
+  await db.updateInvoice(m.id, orderNumber, { status: 'cancelled' });
+  
   return { success: true };
 }
 

@@ -13,33 +13,33 @@ const MOCK_PRODUCT = {
 
 describe('ProductCard', () => {
   it('renders product name and price', () => {
-    render(<ProductCard product={MOCK_PRODUCT} />)
+    render(<ProductCard product={MOCK_PRODUCT} storeSlug="test-store" />)
     expect(screen.getByText('Nasi Lemak Ayam')).toBeInTheDocument()
     expect(screen.getByText('RM 8.50')).toBeInTheDocument()
   })
 
   it('shows rating stars when avg_rating > 0', () => {
-    render(<ProductCard product={MOCK_PRODUCT} />)
+    render(<ProductCard product={MOCK_PRODUCT} storeSlug="test-store" />)
     expect(screen.getByText('(12)')).toBeInTheDocument()
   })
 
   it('shows Out of Stock badge when stock_qty = 0', () => {
-    render(<ProductCard product={{ ...MOCK_PRODUCT, stock_qty: 0 }} />)
+    render(<ProductCard product={{ ...MOCK_PRODUCT, stock_qty: 0 }} storeSlug="test-store" />)
     expect(screen.getByText('Out of Stock')).toBeInTheDocument()
   })
 
   it('shows Low Stock badge when stock_qty <= 5', () => {
-    render(<ProductCard product={{ ...MOCK_PRODUCT, stock_qty: 3 }} />)
+    render(<ProductCard product={{ ...MOCK_PRODUCT, stock_qty: 3 }} storeSlug="test-store" />)
     expect(screen.getByText('Only 3 left')).toBeInTheDocument()
   })
 
   it('does NOT show add to cart button when out of stock', () => {
-    render(<ProductCard product={{ ...MOCK_PRODUCT, stock_qty: 0 }} />)
+    render(<ProductCard product={{ ...MOCK_PRODUCT, stock_qty: 0 }} storeSlug="test-store" />)
     expect(screen.queryByRole('button', { name: /cart/i })).not.toBeInTheDocument()
   })
 
   it('links to correct product URL', () => {
-    render(<ProductCard product={MOCK_PRODUCT} />)
+    render(<ProductCard product={MOCK_PRODUCT} storeSlug="test-store" />)
     const links = screen.getAllByRole('link')
     expect(links.some((l) => l.getAttribute('href') === '/store/store-1/product/p1')).toBe(true)
   })
