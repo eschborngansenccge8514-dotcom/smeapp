@@ -1,0 +1,26 @@
+{
+  "name": "@repo/einvoice-service",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "jest --runInBand --forceExit",
+    "migrate": "node db/migrate.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "bullmq": "^4.12.0",
+    "ioredis": "^5.3.2",
+    "nodemailer": "^6.9.7",
+    "node-cron": "^3.0.3",
+    "dotenv": "^16.3.1",
+    "node-forge": "^1.3.1",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "nodemon": "^3.0.1"
+  }
+}

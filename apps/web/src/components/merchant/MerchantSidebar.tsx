@@ -5,7 +5,7 @@ import {
   LayoutDashboard, ShoppingBag, Package,
   BarChart2, Users, Tag, Star, Wallet,
   Store, Palette, ChevronRight, Truck, Landmark,
-  Mail, Bell, Globe, Trophy
+  Mail, Bell, Globe, Trophy, FileText
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -22,6 +22,7 @@ const NAV_ITEMS = [
   { label: 'Notifications',  href: '/merchant/notifications',  icon: Bell },
   { label: 'Payouts',          href: '/merchant/payouts',           icon: Wallet },
   { label: 'Payment Config',   href: '/merchant/settings/payment',  icon: Landmark },
+  { label: 'e-Invoice Config', href: '/merchant/settings/einvoice', icon: FileText },
   { label: 'Store Settings',   href: '/merchant/store-settings',    icon: Store },
   { label: 'Brand Settings',   href: '/merchant/brand-settings',    icon: Palette },
   { label: 'Delivery',         href: '/merchant/settings/delivery', icon: Truck },

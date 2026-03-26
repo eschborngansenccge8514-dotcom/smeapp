@@ -5,6 +5,7 @@ import { OrderCard } from './OrderCard'
 import toast from 'react-hot-toast'
 
 const PIPELINE_COLUMNS = [
+  { status: 'pending',    label: '🕒 Pending',     color: 'border-yellow-200 bg-yellow-50' },
   { status: 'confirmed',  label: '✅ Confirmed',   color: 'border-blue-200 bg-blue-50'  },
   { status: 'preparing',  label: '👨‍🍳 Preparing',   color: 'border-orange-200 bg-orange-50' },
   { status: 'ready',      label: '📦 Ready',        color: 'border-indigo-200 bg-indigo-50' },
@@ -12,6 +13,7 @@ const PIPELINE_COLUMNS = [
 ]
 
 const NEXT_STATUS: Record<string, string> = {
+  pending: 'confirmed',
   confirmed: 'preparing',
   preparing: 'ready',
   ready: 'dispatched',

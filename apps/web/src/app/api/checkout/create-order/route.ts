@@ -152,21 +152,32 @@ export async function POST(req: NextRequest) {
     })
 
     // 6. Create payment record
-    await admin.from('payments').insert({
+    const { error: paymentError } = await admin.from('payments').insert({
       order_id:        order.id,
       customer_id:     user.id,
-      amount:          total,
+      amount:          amountCents, // Use cents for integer column
       billplz_bill_id: bill.id,
       billplz_url:     bill.url,
       gateway:         'billplz',
       status:          'pending',
     })
 
+    if (paymentError) {
+      console.error('Payment record creation error:', paymentError)
+      throw new Error(`Failed to create payment record: ${paymentError.message}`)
+    }
+
     // 7. Update order with bill ID
-    await admin
+    const { error: updateError } = await admin
       .from('orders')
       .update({ billplz_bill_id: bill.id })
       .eq('id', order.id)
+
+    if (updateError) {
+      console.error('Order update error:', updateError)
+      throw new Error(`Failed to update order with Billplz ID: ${updateError.message}`)
+    }
+
 
     return NextResponse.json({ orderId: order.id, billUrl: bill.url, billId: bill.id })
   } catch (err: any) {

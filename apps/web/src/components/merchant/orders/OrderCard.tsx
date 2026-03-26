@@ -5,6 +5,7 @@ import { formatPrice } from '@/lib/utils'
 import { timeAgo } from '@/lib/date'
 
 const ADVANCE_LABELS: Record<string, string> = {
+  pending: 'Confirm Order',
   confirmed: 'Start Preparing',
   preparing: 'Mark Ready',
   ready: 'Mark Dispatched',
@@ -63,7 +64,7 @@ export function OrderCard({
           className="p-1.5 bg-gray-100 rounded-lg text-gray-500 hover:bg-gray-200">
           <ChevronRight size={14} />
         </Link>
-        {order.status === 'confirmed' && (
+        {['pending', 'confirmed'].includes(order.status) && (
           <button onClick={handleCancel}
             className="p-1.5 bg-red-50 rounded-lg text-red-500 hover:bg-red-100">
             <X size={14} />
